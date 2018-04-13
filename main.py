@@ -28,30 +28,28 @@ def analyse(statement):
     tokens = nltk.word_tokenize(statement)
     sintatic = nltk.pos_tag(tokens)
 
-    #Example "my phone is on the table"
-    if (sintatic[0][1] == 'PRP$' and 'NN' in sintatic[1][1] and 'VB' in sintatic[2][1] and sintatic[3][1] == 'IN' and 'NN' in sintatic[4][1] ):
-        print(statement)
-        print("Without DT")
+    #Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
+    if( 'PRP$' == sintatic[0][1] and 'NN' in sintatic[1][1] and 'VB' in sintatic[2][1] and sintatic[3][1] == 'IN' and sintatic[4][1] == 'DT' and 'NN' in sintatic[5][1]):
+        subject = sintatic[0][0] + " " + sintatic[1][0];
+        pred = sintatic[2][0] + " " + sintatic[3][0];
+        obj = sintatic[4][0] + " " + sintatic[5][0];
+        print("Giving info")
 
-
-        return
-
-    #Example "my food is in the fridge"
-    elif(sintatic[0][1] == 'PRP$' and 'NN' in sintatic[1][1] and 'VB' in sintatic[2][1] and sintatic[3][1] == 'IN' and sintatic[4][1] == 'DT' and 'NN' in sintatic[5][1]):
-        print(statement)
-        print("With DT")
 
         return
     #Example "My name is Jesus" , sometimes the name as JJ (david) tag, other times as NN (jesus)
     elif (sintatic[0][1] == 'PRP$' and 'NN' in sintatic[1][1] and 'VB' in sintatic[2][1] and ('JJ' or 'NN' in sintatic[3][1])):
-        print(statement)
         print("Name of interactor is " + sintatic[3][0])
 
         return
 
-    #Example "Where is my phone" - must search in triplos for answear
-    elif(sintatic[0][1] == 'WRB' and 'VB' in sintatic[1][1] and sintatic[2][1] == 'PRP$' and 'NN' in sintatic[3][1]):
-        print(statement)
+    #Example "Where is my phone" / "where is the fone"- must search in triplos for answear
+    elif(sintatic[0][1] == 'WRB' and 'VB' in sintatic[1][1] and 'PRP$' == sintatic[2][1] and 'NN' in sintatic[3][1]):
+        obj = sintatic[2][0] + " " + sintatic[3][0]
+
+        #Search in triplos for obj
+
+
         print("Asking about whereabout of " + sintatic[3][0])
 
         return
