@@ -64,7 +64,7 @@ def analyse(statement, triplestore):
 
 
     # Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
-    if ('PRP$' == tags[0][1] and 'NN' in tags[1][1] and 'VB' in tags[2][1]
+    if ('NN' in tags[1][1] and 'VB' in tags[2][1]
             and tags[3][1] == 'IN' and tags[4][1] == 'DT' and 'NN' in tags[5][1]):
         sub = tags[0][0] + " " + tags[1][0]
         pred = tags[2][0] + " " + tags[3][0]
@@ -75,7 +75,7 @@ def analyse(statement, triplestore):
         return output
 
     # Example "Where is my phone" / "where is the phone"- must search in triplos for answear
-    elif tags[0][1] == 'WRB' and 'VB' in tags[1][1] and 'PRP$' == tags[2][1] and 'NN' in tags[3][1]:
+    elif tags[0][1] == 'WRB' and 'VB' in tags[1][1]  and 'NN' in tags[3][1]:
         obj = tags[2][0] + " " + tags[3][0]
         flag = False
 
