@@ -33,7 +33,7 @@ from responses import responses, smart_responses
 
 def smart_response(statement):
     for pattern, s_responses in smart_responses:
-        match = re.match(pattern, statement.rstrip(".!"))
+        match = re.match(pattern.lower(), statement.rstrip(".!").lower())
         if match:
             response = random.choice(s_responses)
             return response.format(*[reflect(g) for g in match.groups()])
@@ -75,7 +75,7 @@ def analyse(statement, triple_store):
             return output
         else:
             return smart_response(statement)
-    elif len(tokens) == 4:
+    elif len(tokens) == 4 or len(tokens) == 5:
         # Example "Where is my phone" / "where is the phone"- must search in triplos for answear
         if (tags[0][1] == 'WRB') and ('VB' in tags[1][1]) and ('DT' or 'PRP$' in tags[2][1]) \
                 and ('NN' in tags[3][1]):
@@ -149,7 +149,7 @@ def main():
     triple_store = TripleStore()
     while True:
         statement = input("You > ")
-        statement = statement.lower()
+        #statement = statement.lower()
         if statement == "bye":
             print("Bot > bye")
             break
