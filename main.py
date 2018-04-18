@@ -43,7 +43,7 @@ reflections = {
     "me": "you"
 }
 
-responses = ["So,", "I see,"];
+responses = ["So,", "I see,","I am glad to know that,"];
 
 smart_responses = ["The sky is infinite.","There are many stars.","Deadpool was a great movie.","Aveiro has nice weather"]
 
@@ -74,7 +74,7 @@ def analyse(statement, triplestore):
 
     if(len(tokens) == 6):
         # Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
-        if ('DT' or 'PRP$' in tags[0][1] and 'NN' in tags[1][1] and 'VB' in tags[2][1] and tags[3][1] == 'IN' and tags[4][1] == 'DT' and 'NN' in tags[5][1]):
+        if ('DT' or 'PRP$' in tags[0][1]) and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) and (tags[3][1] == 'IN') and (tags[4][1] == 'DT') and ('NN' in tags[5][1]):
             sub = tags[0][0] + " " + tags[1][0]
             pred = tags[2][0] + " " + tags[3][0]
             obj = tags[4][0] + " " + tags[5][0]
@@ -82,10 +82,14 @@ def analyse(statement, triplestore):
             triplestore.add_triple(sub, pred, obj)
             output = random.choice(responses) + " " + reflect(statement)
             return output
+        else:
+            output = random.choice(smart_responses)
+            return output
+
 
     elif(len(tokens) == 4):
         # Example "Where is my phone" / "where is the phone"- must search in triplos for answear
-        if tags[0][1] == 'WRB' and 'VB' in tags[1][1] and ('DT' or 'PRP$' in tags[2][1]) and 'NN' in tags[3][1]:
+        if (tags[0][1] == 'WRB') and ('VB' in tags[1][1]) and ('DT' or 'PRP$' in tags[2][1]) and ('NN' in tags[3][1]):
             obj = tags[2][0] + " " + tags[3][0]
             flag = False
 
@@ -119,7 +123,7 @@ def analyse(statement, triplestore):
 
         #My name is walter white example with last name
         # Example "My name is Jesus" , sometimes the name as JJ (david) tag, other times as NN (jesus)
-        elif tags[0][1] == 'PRP$' and 'NN' in tags[1][1] and 'VB' in tags[2][1] and ('JJ' or 'NN' in tags[3][1]):
+        elif (tags[0][1] == 'PRP$') and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) and ('JJ' or 'NN' in tags[3][1]):
 
             #With last name
             if(len(tags) == 5):
@@ -138,8 +142,8 @@ def analyse(statement, triplestore):
             triplestore.add_triple(sub, pred, obj)
             return output
 
-        #Example "What is my name"
-        elif tags[0][1] == 'WP' and 'VB' in tags[1][1] and tags[2][1] == 'PRP$' and tags[3][1] == ('NN' or 'JJ'):
+        #Example "What is my name" / any question with what + 3 parcels
+        elif (tags[0][1] == 'WP') and ('VB' in tags[1][1]) and (tags[2][1] == 'PRP$') and (tags[3][1] in ('NN' or 'JJ')):
 
             obj = tags[2][0] + " "+tags[3][0]
 
@@ -162,7 +166,9 @@ def analyse(statement, triplestore):
                 # Come up with something smart
                 output = "I don't know what " + reflect(tags[2][0]) + " " + reflect(tags[3][0]) + " " + tags[1][0]
                 return (output)
-
+        else:
+            output = random.choice(smart_responses)
+            return output
     else:
         output = random.choice(smart_responses)
         return output
