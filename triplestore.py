@@ -59,6 +59,44 @@ class TripleStore:
                         triples_list.append(triple)
         return triples_list
 
+    def query(self, clauses):
+        bindings = None
+        for clause in clauses:
+            bpos = {}
+            qc = []
+            for pos, x in enumerate(clause):
+                if x.startswith('?'):
+                    qc.append(None)
+                    bpos[x[
+                         1:]] = pos
+                else:
+                    qc.append(x)
+            rows = list(self.triples(qc[0], qc[1], qc[2]))
+            if bindings == None:
+                bindings = []
+                for row in rows:
+                    binding = {}
+                    for var, pos in bpos.items():
+                        binding[var] = row[pos]
+                    bindings.append(binding)
+            else:
+                newb = []
+                for binding in bindings:
+                    for row in rows:
+                        validmatch = True
+                        tempbinding = binding.copy()
+                        for var, pos in bpos.items():
+                            if var in tempbinding:
+                                if tempbinding[var] != row[pos]:
+                                    validmatch = False
+                            else:
+                                tempbinding[var] = row[
+                                    pos]
+                        if validmatch:
+                            newb.append(tempbinding)
+                bindings = newb
+        return bindings
+
     def print_all_triples(self):
         t = self.triples(None, None, None)
         self.print_triples(t)
