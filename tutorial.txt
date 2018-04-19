@@ -1,0 +1,12 @@
+Atualmente o nosso bot ainda não faz inferências, contudo já armazena informação dada pelo interlocutor e consegue responder de forma inteligente às frases que não compreende.
+
+Um pequeno exemplo de interação será o seguinte, se escrever "my name is john doe" , o bot irá armazenar isso, e consequentemente, se perguntar "what is my name" ele saberá responder 
+que eu sou o John Doe, caso eu indique um novo nome o bot irá esquecer o nome anterior e apenas conhecer o atual.
+
+Outro exemplo passa por escrever "my cat is in the house" e  "my cat is on the table", o bot saberá responder que "your cat is in the house, on the table", como a informação é 
+armazenada em triplos, sempre que o predicado da informação dada for igual a um predicado já existente ele irá apenas recordar o atual, por exemplo, "my cat is in the bed" e "my cat 
+is in the chair", o bot irá apenas saber que "your cat is in the chair", que é a informação mais recente que contém.
+
+Para frases desconhecidas, podem ser vistas no ficheiro responses.py , todas as que começam por um certo padrão, "I need", "I am", entre outras, contêm um conjunto pré-selecionado de 
+respostas, caso contenha palavras específicas e não contenha um padrão anterior, como "computer" também existe uma pre-seleção de afirmações que o bot usará. Esta é a parte referente 
+ao modelo de funcionamento da eliza. Caso o padrão não seja encontrado, existe uma espécie de default que é o último conjunto de frases (r'(*)') que irá ser usado.
