@@ -20,3 +20,8 @@ python3
 »»» import nltk
 »»» nltk.download('punkt')
 »»» nltk.download('averaged_perceptron_tagger')
+
+```
+
+## Examples
+The file [tutorial.txt](https://github.com/tiagohpf/si-2018-chatbot/blob/master/tutorial.txt) shows some examples that's possible to follow in the execution of the application. It shows different scenarios and the interaction between the user and the conversational agent.
