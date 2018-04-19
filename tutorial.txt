@@ -1,12 +1,35 @@
-Atualmente o nosso bot ainda não faz inferências, contudo já armazena informação dada pelo interlocutor e consegue responder de forma inteligente às frases que não compreende.
+#Sample Interaction for bot to learn our name
+You > my name is john
+Bot > I am glad to know that, your name is john
+You > what is my name
+Bot > your name is john
 
-Um pequeno exemplo de interação será o seguinte, se escrever "my name is john doe" , o bot irá armazenar isso, e consequentemente, se perguntar "what is my name" ele saberá responder 
-que eu sou o John Doe, caso eu indique um novo nome o bot irá esquecer o nome anterior e apenas conhecer o atual.
+#If we change name the bot will learn the new name
+You > my name is john doe
+Bot > I am glad to know that, your name is john doe
+You > what is my name
+Bot > your name is john doe
 
-Outro exemplo passa por escrever "my cat is in the house" e  "my cat is on the table", o bot saberá responder que "your cat is in the house, on the table", como a informação é 
-armazenada em triplos, sempre que o predicado da informação dada for igual a um predicado já existente ele irá apenas recordar o atual, por exemplo, "my cat is in the bed" e "my cat 
-is in the chair", o bot irá apenas saber que "your cat is in the chair", que é a informação mais recente que contém.
+#Now using a simple exemple the bot remembers where the cat is
+You > my cat is on the house
+Bot > I see, your cat is on the house
+You > my cat is in the bed
+Bot > I am glad to know that, your cat is in the bed
+You > where is my cat
+Bot > your cat is on the house, in the bed
 
-Para frases desconhecidas, podem ser vistas no ficheiro responses.py , todas as que começam por um certo padrão, "I need", "I am", entre outras, contêm um conjunto pré-selecionado de 
-respostas, caso contenha palavras específicas e não contenha um padrão anterior, como "computer" também existe uma pre-seleção de afirmações que o bot usará. Esta é a parte referente 
-ao modelo de funcionamento da eliza. Caso o padrão não seja encontrado, existe uma espécie de default que é o último conjunto de frases (r'(*)') que irá ser usado.
+#The cat has now moves places inside the house
+You > my cat is in the desk
+Bot > So, your cat is in the desk
+You > where is my cat
+Bot > your cat is on the house, in the desk
+
+#For sentences that he is not able to process he just makes small-talk.
+You > I like dogs
+Bot > Why do you say that you like dogs?
+You > Because dogs are very funny
+Bot > Does that reason apply to anything else?
+You > Yes, a dog with a hat
+Bot > OK, but can you elaborate a bit?
+You > Are you a computer
+Bot > I may be a computer -- what do you think?
