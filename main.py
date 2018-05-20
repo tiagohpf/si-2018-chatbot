@@ -4,8 +4,7 @@ import random
 from triplestore import TripleStore
 from reflections import reflections
 from responses import responses, smart_responses
-
-
+from semantic_network import *
 # more tags search here
 # PRP personal pronoun I, he, she
 # PRP$ possessive pronoun my, his, hers
@@ -54,7 +53,7 @@ def reflect(fragment):
     return ' '.join(tokens)
 
 
-def analyse(statement, triple_store):
+def analyse(statement, semantic,triple_store):
     tokens = nltk.word_tokenize(statement)
     tags = nltk.pos_tag(tokens)
 
@@ -69,6 +68,9 @@ def analyse(statement, triple_store):
             sub = tags[0][0] + " " + tags[1][0]
             pred = tags[2][0] + " " + tags[3][0]
             obj = tags[4][0] + " " + tags[5][0]
+            a = Association(sub,pred,obj)
+            da = Declaration('user',a)
+            semantic.insert(da);
             triple_store.remove_triples(sub, pred, None)
             triple_store.add_triple(sub, pred, obj)
             output = random.choice(responses) + " " + reflect(statement)
@@ -147,13 +149,15 @@ def analyse(statement, triple_store):
 
 def main():
     triple_store = TripleStore()
+    semantic = SemanticNetwork()
     while True:
         statement = input("You > ")
         #statement = statement.lower()
         if statement == "bye":
             print("Bot > bye")
             break
-        print("Bot > " + analyse(statement, triple_store))
+        print("Bot > " + analyse(statement, semantic,triple_store))
+        print("!!!!!!"+str(semantic.query_local("user","my phone")))
 
 
 if __name__ == "__main__":
