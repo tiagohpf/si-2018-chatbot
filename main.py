@@ -53,13 +53,13 @@ def reflect(fragment):
     return ' '.join(tokens)
 
 
-def analyse(statement, semantic,triple_store):
+def analyse(statement, semantic):
     tokens = nltk.word_tokenize(statement)
     tags = nltk.pos_tag(tokens)
 
     # Print values
-    for i in tags:
-        print(i)
+    #for i in tags:
+    #    print(i)
 
     if len(tokens) == 6:
         # Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
@@ -71,8 +71,6 @@ def analyse(statement, semantic,triple_store):
             a = Association(sub,pred,obj)
             da = Declaration('user',a)
             semantic.insert(da);
-            triple_store.remove_triples(sub, pred, None)
-            triple_store.add_triple(sub, pred, obj)
             output = random.choice(responses) + " " + reflect(statement)
             return output
         else:
@@ -84,8 +82,13 @@ def analyse(statement, semantic,triple_store):
             obj = tags[2][0] + " " + tags[3][0]
             flag = False
             # Search in triples for obj
-            for i in range(0, len(triple_store.triples(obj, None, None))):
-                res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
+
+            for i in range(0, len(semantic.query_local("user",obj))):
+                size=len(semantic.query_local("user",obj))
+                res_sub= semantic.query_local("user",obj)[i].relation.entity1
+                res_pred=semantic.query_local("user",obj)[i].relation.name
+                red_obj=semantic.query_local("user",obj)[i].relation.entity2
+                #res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
                 if not verify_in(nltk.pos_tag(nltk.word_tokenize(res_pred))):
                     continue
                 if tags[1][0] in res_pred:
@@ -118,8 +121,9 @@ def analyse(statement, semantic,triple_store):
                 pred = tags[2][0]
                 obj = tags[3][0]
                 output = random.choice(responses) + " your " + tags[1][0] + " is " + tags[3][0]
-            triple_store.remove_triples(sub, pred, None)
-            triple_store.add_triple(sub, pred, obj)
+            a = Association(sub,pred,obj)
+            dec = Declaration('user',a)
+            semantic.insert(dec);
             return output
         # Example "What is my name" / any question with what + 3 parcels
         elif (tags[0][1] == 'WP') and ('VB' in tags[1][1]) and (tags[2][1] == 'PRP$') and (
@@ -127,8 +131,12 @@ def analyse(statement, semantic,triple_store):
             obj = tags[2][0] + " " + tags[3][0]
             flag = False
             # Search in triples for obj
-            for i in range(0, len(triple_store.triples(obj, None, None))):
-                res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
+            for i in range(0, len(semantic.query_local("user",obj))):
+                size =len(semantic.query_local("user",obj))
+                res_sub= semantic.query_local("user",obj)[i].relation.entity1
+                res_pred=semantic.query_local("user",obj)[i].relation.name
+                red_obj=semantic.query_local("user",obj)[i].relation.entity2
+                #res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
                 if tags[1][0] in res_pred:
                     # Check if verb is the same, is != are
                     flag = True
@@ -147,17 +155,17 @@ def analyse(statement, semantic,triple_store):
         return smart_response(statement)
 
 
+
 def main():
-    triple_store = TripleStore()
+
     semantic = SemanticNetwork()
     while True:
         statement = input("You > ")
-        #statement = statement.lower()
+        statement = statement.lower()
         if statement == "bye":
             print("Bot > bye")
             break
-        print("Bot > " + analyse(statement, semantic,triple_store))
-        print("!!!!!!"+str(semantic.query_local("user","my phone")))
+        print("Bot > " + analyse(statement, semantic))
 
 
 if __name__ == "__main__":
