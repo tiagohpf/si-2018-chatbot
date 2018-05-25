@@ -2,7 +2,6 @@
 from collections import Counter
 
 
-
 # Classe Relation, com as seguintes classes derivadas:
 #     - Association - uma associacao generica entre duas entidades
 #     - Subtype     - uma relacao de subtipo entre dois tipos
@@ -53,9 +52,11 @@ class AssocOne(Relation):
     def __init__(self, e1, assoc, e2):
         Relation.__init__(self, e1, assoc, e2)
 
+
 class AssocNum(Relation):
     def __init__(self, e1, assoc, e2):
         Relation.__init__(self, e1, assoc, e2)
+
 
 # Exemplo:
 #   m = Member('socrates','homem')
@@ -90,7 +91,7 @@ class SemanticNetwork:
         self.declarations = ldecl
 
     def __str__(self):
-        return my_list2string(self.declarations)
+        return self.my_list2string(self.declarations)
 
     def insert(self, decl):
         self.declarations.append(decl)
@@ -108,6 +109,11 @@ class SemanticNetwork:
         for d in self.query_result:
             print(str(d))
 
+    def remove_instances(self, entity1, rel):
+        queries = self.query_local('user', entity1, rel)
+        for query in queries:
+            self.declarations.remove(query)
+
     # 1. verificar se entity1 é predecessor de e2
     def predecessor(self, pred, suc):
         declarations = self.query_local(e1=suc, rel='subtype') + \
@@ -119,6 +125,17 @@ class SemanticNetwork:
                 return True
             else:
                 return self.predecessor(pred, query.relation.entity2)
+
+    def path_to_root(self, entity):
+        direct_relations = [d for d in self.declarations if d.relation.entity1 == entity]
+        if direct_relations is []:
+            return []
+        inheritances = [d for d in direct_relations
+                        if isinstance(d.relation, Subtype) or isinstance(d.relation, Member)]
+        parents = [d.relation.entity2 for d in inheritances]
+        for d in inheritances:
+            parents += self.path_to_root(d.relation.entity2)
+        return parents
 
     # 2. caminho de uma entidade até ao seu predecessor
     def predecessor_path(self, pred, suc):
@@ -151,8 +168,8 @@ class SemanticNetwork:
 
     # 7. associações de uma entidade
     def entityAssociations(self, entity):
-       return list(set([d.relation.name for d in self.declarations if d.relation.entity1 == entity and
-                       isinstance(d.relation, Association)]))
+        return list(set([d.relation.name for d in self.declarations if d.relation.entity1 == entity and
+                         isinstance(d.relation, Association)]))
 
     # 8. relações declaradas pelo interlocutor
     def userDeclarations(self, user):
@@ -161,7 +178,7 @@ class SemanticNetwork:
     # 9. número de associações utilizadas nas relações declaradas por um interlocutor
     def numAssociations(self, user):
         return len(set([d.relation.name for d in self.declarations
-                    if isinstance(d.relation, Association) and d.user == user]))
+                        if isinstance(d.relation, Association) and d.user == user]))
 
     # 10. lista de tuplos (associação, interlocutor) de uma entidade
     def entityAssociations(self, entity):
@@ -185,7 +202,7 @@ class SemanticNetwork:
     # 11 b). declarações locais ou associações herdadas por uma entidade
     def query2(self, entity, rel=None):
         direct_dec = [d for d in self.declarations
-                        if d.relation.entity1 == entity]
+                      if d.relation.entity1 == entity]
         if direct_dec == []:
             return []
         relations = [d for d in direct_dec if rel is None or d.relation.name == rel] + \
@@ -221,7 +238,7 @@ class SemanticNetwork:
         if len(values) == 1:
             return values[0]
         parents_values = [d.relation.entity2 for d in self.query(entity, association)
-                   if d.relation.entity1 is not entity]
+                          if d.relation.entity1 is not entity]
         cLocal = Counter(values)
         if parents_values == []:
             return max([v for v in cLocal if cLocal[v] == max(cLocal.values())])
@@ -239,7 +256,7 @@ class SemanticNetwork:
 
     # 14. associações das entidades descendentes de um tipo
     def query_down(self, parent, assoc):
-        declarations =  [d for d in self.declarations if d.relation.entity1 == parent or d.relation.entity2 == parent]
+        declarations = [d for d in self.declarations if d.relation.entity1 == parent or d.relation.entity2 == parent]
         if declarations == []:
             return []
         relations = [d for d in declarations if d.relation.name == assoc and isinstance(d.relation, Association)]
@@ -249,7 +266,6 @@ class SemanticNetwork:
         for d in childs:
             relations += self.query_down(d, assoc)
         return relations
-
 
     # 15. dado um tipo e uma associação, devolver valor mais frequente nas entidades descendentes
     def query_induce(self, entity, association):
@@ -267,7 +283,7 @@ class SemanticNetwork:
     # 16 b). consultas de valores em diferentes tipos de associações locais
     def query_local_assoc(self, entity, association):
         values = [d.relation.entity2 for d in self.declarations
-                        if d.relation.entity1 == entity and d.relation.name == association]
+                  if d.relation.entity1 == entity and d.relation.name == association]
         if values == []:
             return None
         counter = Counter(values)
@@ -287,11 +303,11 @@ class SemanticNetwork:
         elif association in [d.relation.name for d in self.declarations if isinstance(d.relation, AssocOne)]:
             maxim = value_frequent = None
             for v in counter:
-                res = counter[v]/len(list(counter.elements()))
+                res = counter[v] / len(list(counter.elements()))
                 if maxim is None or res > maxim:
                     maxim = res
                     value_frequent = v
-            return value_frequent,round(maxim, 2)
+            return value_frequent, round(maxim, 2)
         elif association in [d.relation.name for d in self.declarations if isinstance(d.relation, AssocNum)]:
             return round(sum(values) / len(values), 1)
 
