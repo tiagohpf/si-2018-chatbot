@@ -80,8 +80,16 @@ def analyse(statement, semantic):
 
         #What do you know about ... ?
         elif('WP' in tags[0][1] and 'VBP' in tags[1][1] and 'PRP' in tags[2][1] and 'VB' in tags[3][1] and 'IN' in tags[4][1]):
-            if len(semantic.query_local('user', str(tokens[5]+' '+tokens[6]))) > 0 or len(semantic.query_local('user', e2=str(tokens[5]+' '+tokens[6]))) > 0 :
-                listofknowledge=semantic.query_local('user', str(tokens[5]+' '+tokens[6])) +semantic.query_local('user', e2=(tokens[5]+tokens[6]))
+            #entity = my phone
+            if(len(tokens)==7):
+                entity=str(tokens[5]+' '+tokens[6])
+            #entity = jhon
+            else:
+                entity=str(tokens[5])
+            print(entity)
+
+            if (int(len(semantic.query_local('user', entity))) > 0 or int(len(semantic.query_local('user', e2=entity))) > 0):
+                listofknowledge=semantic.query_local('user', entity) +semantic.query_local('user', e2=entity)
                 print(len(listofknowledge))
                 output =""
                 count=1
@@ -96,10 +104,9 @@ def analyse(statement, semantic):
                     count+=1
                 return reflect(output)
             return smart_response(statement)
-
         else:
             return smart_response(statement)
-            
+
     elif len(tokens) == 4 or len(tokens) == 5:
         print('entrei')
 
