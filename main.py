@@ -45,6 +45,7 @@ def analyse(statement, semantic, condition):
         # - My food is on the fridge
         # - The phone is on the table
         if condition.dt_nn_vb_in_dt_nn():
+            print("My phone is on the table")
             sub = words[0] + " " + words[1]
             pred = words[2] + " " + words[3]
             obj = words[4] + " " + words[5]
@@ -60,6 +61,7 @@ def analyse(statement, semantic, condition):
         # - What do you know about John?
         # - What do you know about my phone?
         elif condition.wp_vbp_prp_vb_in():
+            print("What do you know about John?")
             if len(tokens) == 7:
                 sub = words[5] + " " + words[6]
             else:
@@ -87,6 +89,7 @@ def analyse(statement, semantic, condition):
         # - Where is my phone?
         # - Where is the phone?
         if condition.wrb_vb_dt_nn():
+            print("Where is my phone?")
             obj = words[2] + " " + words[3]
             last_sentence = False
             results = semantic.query_local('user', obj)
@@ -113,6 +116,7 @@ def analyse(statement, semantic, condition):
         # - John is my friend
         # - John is a friend
         elif condition.nn_vbz_dt_nn(words[1] + " " + words[2]):
+            print("John is my friend")
             sub = words[0]
             pred = words[1]
             obj = words[2] + " " + words[3]
@@ -120,17 +124,38 @@ def analyse(statement, semantic, condition):
                 semantic.remove_instances(sub=sub, pred=pred)
             a = Association(sub, pred, obj)
             da = Declaration("user", a)
+            print(da)
             semantic.insert(da)
             output = random.choice(responses) + " " + reflect(statement)
             return output
 
         # Examples:
         # - My name is John Smith
-        # - My name is Jesus
+        # - My name is Zé
         # Sometimes it detects JJ and NN in anothers
         elif condition.prp_nn_vb_nn():
+            print("My name is John Smith")
             sub = words[0] + " " + words[1]
             pred = words[2]
+            # With last name
+            if len(tags) == 5:
+                obj = words[3] + " " + words[4]
+            else:
+                obj = words[3]
+            output = random.choice(responses) + " your " + words[1] + " is " + obj
+            if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
+                semantic.remove_instances(sub, pred, obj)
+            a = Association(sub, pred, obj)
+            dec = Declaration('user', a)
+            semantic.insert(dec)
+            return output
+
+        # Examples:
+        # - I have a cat
+        elif condition.nns_vbp_dt_nn():
+            print("I have a cat")
+            sub = words[0]
+            pred = words[1]+ " " + words[2]
             # With last name
             if len(tags) == 5:
                 obj = words[3] + " " + words[4]
@@ -148,6 +173,7 @@ def analyse(statement, semantic, condition):
         # - A cat is an animal
         # - A pussycat is a cat
         elif condition.dt_nn_vbz_dt_nn() or condition.nn_vbz_dt_nn_subtype():
+            print("A cat is an animal")
             if condition.dt_nn_vbz_dt_nn():
                 sub = words[1]
                 pred = words[2] + " " + words[3]
@@ -178,6 +204,7 @@ def analyse(statement, semantic, condition):
         # - What is my name?
         # Any question with 'What' that has 4 words
         elif condition.wp_vbz_prp_nn():
+            print("What is my name?")
             obj = words[2] + " " + words[3]
             same_verb = False
             results = semantic.query_local('user', e1=obj)
@@ -195,13 +222,49 @@ def analyse(statement, semantic, condition):
             else:
                 return "I don't know what " + reflect(words[2]) + " " + \
                        reflect(words[3]) + " " + words[1]
+
+
+        # Examples:
+        # - Do i have a cat
+        elif condition.vbp_nns_vbp_dt_nn():
+            print("Do  i have a cat")
+            obj = words[4]
+            sub = words[1]
+            pred =words[2]+" "+words[3]
+            another_case=words[3]+" "+words[4]
+            last_sentence = False
+            print(sub)
+            results = semantic.query_local('user',e1=sub ,e2=obj)
+            if (results==[]):
+                results = semantic.query_local('user',e1=sub ,e2=another_case)
+            print(results)
+            for sentence in results:
+                res_sub = sentence.relation.entity1
+                res_pred = sentence.relation.name
+                red_obj = sentence.relation.entity2
+
+                if pred in res_pred or words[2] in res_pred:
+                    if not last_sentence:
+                        output = '{} {} {}'.format(res_sub, res_pred, red_obj)
+                    else:
+                        res_pred = nltk.word_tokenize(res_pred)
+                        output += ", " + '{} {}'.format(res_pred[1], red_obj)
+                    last_sentence = True
+            if last_sentence:
+                return reflect(output)
+            else:
+                output = "I don't know if " + reflect(words[1]) + " " +pred + " " + obj
+                return output
+
         else:
             return smart_response(statement)
 
     elif len(tokens) == 3:
+
         # Examples:
         # - Who is John?
         if condition.wp_vbz_rb():
+            print("Who is John?")
             obj = words[2]
             same_verb = False
             results = semantic.query_local('user', e1=obj)
