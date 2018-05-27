@@ -34,6 +34,9 @@ smart_responses = [
       "Why do you tell me you're {0}?",
       "Why do you think you're {0}?"]],
 
+    [r'(.*) robot',
+     ["Well, if you can't tell, does it matter ? :) "]],
+
     [r'Are you ([^\?]*)\??',
      ["Why does it matter whether I am {0}?",
       "Would you prefer it if I were not {0}?",
