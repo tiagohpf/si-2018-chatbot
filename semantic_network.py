@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 from collections import Counter
 
 
@@ -109,8 +109,8 @@ class SemanticNetwork:
         for d in self.query_result:
             print(str(d))
 
-    def remove_instances(self, entity1, rel):
-        queries = self.query_local('user', entity1, rel)
+    def remove_instances(self, entity1, rel, obj):
+        queries = self.query_local('user', entity1, rel, obj)
         for query in queries:
             self.declarations.remove(query)
 

@@ -63,7 +63,7 @@ def analyse(statement, semantic):
     for i in tags:
         print(i)
 
-    if len(tokens) == 6:
+    if len(tokens) == 6 or len(tokens) == 7:
         # Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
         if ('DT' or 'PRP$' in tags[0][1]) and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) \
                 and (tags[3][1] == 'IN') and (tags[4][1] == 'DT') and ('NN' in tags[5][1]):
@@ -72,14 +72,36 @@ def analyse(statement, semantic):
             obj = tags[4][0] + " " + tags[5][0]
             a = Association(s, pred, obj)
             da = Declaration('user', a)
-            if len(semantic.query_local('user', s, pred)) > 0:
-                semantic.remove_instances(s, pred)
+            if len(semantic.query_local('user', s, pred, obj)) > 0:
+                semantic.remove_instances(s, pred, obj)
             semantic.insert(da);
             output = random.choice(responses) + " " + reflect(statement)
             return output
+
+        #What do you know about ... ?
+        elif('WP' in tags[0][1] and 'VBP' in tags[1][1] and 'PRP' in tags[2][1] and 'VB' in tags[3][1] and 'IN' in tags[4][1]):
+            if len(semantic.query_local('user', str(tokens[5]+' '+tokens[6]))) > 0 or len(semantic.query_local('user', e2=str(tokens[5]+' '+tokens[6]))) > 0 :
+                listofknowledge=semantic.query_local('user', str(tokens[5]+' '+tokens[6])) +semantic.query_local('user', e2=(tokens[5]+tokens[6]))
+                print(len(listofknowledge))
+                output =""
+                count=1
+                for i in listofknowledge:
+                    res_sub = i.relation.entity1
+                    res_pred = i.relation.name
+                    red_obj = i.relation.entity2
+                    if(count == len(listofknowledge)):
+                        output+=str(res_sub) +" "+str(res_pred)+" "+str(red_obj)
+                        break
+                    output+=str(res_sub) +" "+str(res_pred)+" "+str(red_obj)+ " and "
+                    count+=1
+                return reflect(output)
+            return smart_response(statement)
+
         else:
             return smart_response(statement)
+            
     elif len(tokens) == 4 or len(tokens) == 5:
+        print('entrei')
 
         # Example "Where is my phone" / "where is the phone"- must search in triplos for answear
         if (tags[0][1] == 'WRB') and ('VB' in tags[1][1]) and ('DT' or 'PRP$' in tags[2][1]) \
@@ -109,6 +131,13 @@ def analyse(statement, semantic):
                 output = "I don't know where " + reflect(tags[2][0]) + " " + reflect(tags[3][0]) + " " + tags[1][0]
                 return output
 
+
+
+
+
+
+
+
         # My name is walter white example with last name
         # Example "My name is Jesus" , sometimes the name as JJ (david) tag, other times as NN (jesus)
         elif (tags[0][1] == 'PRP$') and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) \
@@ -126,7 +155,7 @@ def analyse(statement, semantic):
                 obj = tags[3][0]
                 output = random.choice(responses) + " your " + tags[1][0] + " is " + tags[3][0]
             if len(semantic.query_local('user', s, pred)) > 0:
-                semantic.remove_instances(s, pred)
+                semantic.remove_instances(s, pred,obj)
             a = Association(s, pred, obj)
             dec = Declaration('user', a)
             semantic.insert(dec);
@@ -154,6 +183,9 @@ def analyse(statement, semantic):
                     semantic.insert(da)
                     return "So, {} is a {}".format(sub, root)
             return "So, {} {} {}".format(sub, pred, obj)
+
+
+
 
         # Example "Cat is an animal" or "Pussy is a cat"
         elif 'NN' in tags[0][1] and 'VB' in tags[1][1] and 'DT' in tags[2][1] and 'NN' in tags[3][1]:
