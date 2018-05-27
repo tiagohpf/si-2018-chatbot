@@ -144,14 +144,42 @@ def analyse(statement, semantic):
                 obj = tags[2][0]+ " " + tags[3][0]
                 a = Association(s, pred, obj)
                 da = Declaration("user", a)
-                if (len(semantic.query_local('user', s, pred, obj)) > 0 and (obj=='my mom'or obj=='my mother' or obj=='my father' or obj=='my dad')):
-                        semantic.remove_instances(s, pred, obj)
+                if (len(semantic.query_local('user', None,pred, obj)) > 0 and (obj=='my mom'or obj=='my mother' or obj=='my father' or obj=='my dad' or obj=="my girlfriend")):
+                    semantic.remove_instances(None, pred, obj)
                 semantic.insert(da);
-                print(len(semantic.query_local('user', s, pred, obj)))
                 output = random.choice(responses) + " " + reflect(statement)
                 return output
 
+        #who is my friend?"
+        elif(tags[0][1] == 'WP') and ('VBZ' in tags[1][1]) and ('RB'or 'PRP$' in tags[2][1])\
+                and ('NN' in tags[3][1]):
+                #obj = "Tiago"
+                obj = tags[2][0]+" "+tags[3][0]
+                print("entrouuuuuuuuuuuuuuuuuuuuuuu")
+                print(semantic.query_local('user',None,None,obj))
+                flag = False
+                # Search in triples for obj
+                for i in range(0, len(semantic.query_local('user',None,None,obj))):
+                    print(tags[1][0]+"!!!!!!!!!!!!!!!")
+                    res_sub = semantic.query_local('user',None,None,obj)[i].relation.entity1
+                    res_pred = semantic.query_local('user',None,None,obj)[i].relation.name
+                    res_obj = semantic.query_local('user',None,None,obj)[i].relation.entity2
+                    # res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
+                    print(res_sub+" "+res_pred+" "+res_obj)
+                    if tags[1][0] in res_pred:
+                        # Check if verb is the same, is != are
+                        if not flag:
+                            output = '{} {} {}'.format(res_sub, res_pred, res_obj)+" "
+                        else:
 
+                            output += "and"+" "+'{} {} {}'.format(res_sub, res_pred, res_obj)
+                        flag = True
+                if flag:
+                    return reflect(output)
+                else:
+                    # Come up with something smart
+                    output = "I don't know who is " + reflect(obj)
+                    return output
 
         # My name is walter white example with last name
         # Example "My name is Jesus" , sometimes the name as JJ (david) tag, other times as NN (jesus)
@@ -256,7 +284,7 @@ def analyse(statement, semantic):
     elif len(tokens) == 3:
         #who is Tiago?"
         if(tags[0][1] == 'WP') and ('VBZ' in tags[1][1]) and ('RB'or 'NN' in tags[2][1]):
-                #obj = "my friend"
+                #obj = "Tiago"
                 obj = tags[2][0]
                 print(obj)
                 print(semantic.query_local('user',obj))
