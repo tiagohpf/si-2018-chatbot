@@ -109,7 +109,7 @@ class SemanticNetwork:
         for d in self.query_result:
             print(str(d))
 
-    def remove_instances(self, entity1, rel, obj):
+    def remove_instances(self, entity1, rel, obj=None):
         queries = self.query_local('user', entity1, rel, obj)
         for query in queries:
             self.declarations.remove(query)
