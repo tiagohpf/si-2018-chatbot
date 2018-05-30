@@ -294,14 +294,14 @@ def analyse(statement, semantic):
 
 
 def main():
-    semantic = SemanticNetwork()
+    semantic_network = SemanticNetwork()
     while True:
         statement = input("You > ")
         statement = statement.lower()
         if statement == "bye":
             print("Bot > bye")
             break
-        print("Bot > " + analyse(statement, semantic))
+        print("Bot > " + analyse(statement, semantic_network))
 
 
 if __name__ == "__main__":
