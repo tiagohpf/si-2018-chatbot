@@ -5,29 +5,8 @@ from reflections import reflections
 from responses import responses, smart_responses
 from semantic_network import *
 from constants import *
+from conditions import Condition
 
-
-# more tags search here
-# PRP personal pronoun I, he, she
-# PRP$ possessive pronoun my, his, hers
-# JJ adjective 'big'
-# JJR adjective, comparative 'bigger'
-# JJS adjective, superlative 'biggest'
-# NN noun, singular 'desk'
-# NNS noun plural 'desks'
-# NNP proper noun, singular 'Harrison'
-# NNPS proper noun, plural 'Americans'
-# IN preposition/subordinating conjunction
-# VB verb, base form take
-# VBD verb, past tense took
-# VBG verb, gerund/present participle taking
-# VBN verb, past participle taken
-# VBP verb, sing. present, non-3d take
-# VBZ verb, 3rd person sing. present takes
-# WDT wh-determiner which
-# WP wh-pronoun who, what
-# WP$ possessive wh-pronoun whose
-# WRB wh-abverb where, when
 
 # For statement, my phone is on the table create semantic relations (my,phone), (belongs,me) (is,in) (table)
 
@@ -40,13 +19,6 @@ def smart_response(statement):
             return response.format(*[reflect(g) for g in match.groups()])
 
 
-def verify_in(x):
-    for i in x:
-        if 'IN' in i:
-            return True
-    return False
-
-
 def reflect(fragment):
     tokens = fragment.lower().split()
     for i, token in enumerate(tokens):
@@ -55,55 +27,55 @@ def reflect(fragment):
     return ' '.join(tokens)
 
 
-def analyse(statement, semantic):
+def analyse(statement, semantic, condition):
     tokens = nltk.word_tokenize(statement)
     tags = nltk.pos_tag(tokens)
 
     # Print values
-    for i in tags:
-        print(i)
+    for sentence in tags:
+        print(sentence)
+
+    words = [word for word, statement in tags]
+    statements = [statement for word, statement in tags]
+    condition.set_statements(statements)
 
     if len(tokens) == 6 or len(tokens) == 7:
-        # Example "my phone is on the table" or "my food is on the fridge" or "the phone is on the table"
-        if ('DT' or 'PRP$' in tags[0][1]) and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) \
-                and (tags[3][1] == 'IN') and (tags[4][1] == 'DT') and ('NN' in tags[5][1]):
-            s = tags[0][0] + " " + tags[1][0]
-            pred = tags[2][0] + " " + tags[3][0]
-            obj = tags[4][0] + " " + tags[5][0]
-            a = Association(s, pred, obj)
+        # Examples:
+        # - My phone is on the table
+        # - My food is on the fridge
+        # - The phone is on the table
+        if condition.dt_nn_vb_in_dt_nn():
+            sub = words[0] + " " + words[1]
+            pred = words[2] + " " + words[3]
+            obj = words[4] + " " + words[5]
+            a = Association(sub, pred, obj)
             da = Declaration('user', a)
-            if len(semantic.query_local('user', s, pred)) > 0:
-                semantic.remove_instances(s, pred)
+            if len(semantic.query_local('user', sub, pred)) > 0:
+                semantic.remove_instances(sub, pred)
             semantic.insert(da)
             output = random.choice(responses) + " " + reflect(statement)
             return output
 
-        # What do you know about ... ?
-        elif('WP' in tags[0][1] and 'VBP' in tags[1][1] and 'PRP' in tags[2][1] and 'VB' in tags[3][1] and 'IN' in tags[4][1]):
-            # entity = my phone
-            if(len(tokens) == 7):
-                entity = str(tokens[5] + ' ' + tokens[6])
-            #entity = jhon
+        # Examples:
+        # - What do you know about John?
+        # - What do you know about my phone?
+        elif condition.wp_vbp_prp_vb_in():
+            if len(tokens) == 7:
+                sub = words[5] + " " + words[6]
             else:
-                entity = str(tokens[5])
-            print(entity)
-
-            if (int(len(semantic.query_local('user', entity))) > 0 or int(len(semantic.query_local('user', e2=entity))) > 0):
-                listofknowledge = semantic.query_local(
-                    'user', entity) + semantic.query_local('user', e2=entity)
-                print(len(listofknowledge))
+                sub = words[5]
+            results = semantic.query_local('user', e1=sub) + semantic.query_local('user', e2=sub)
+            if len(results) > 0:
                 output = ""
                 count = 1
-                for i in listofknowledge:
-                    res_sub = i.relation.entity1
-                    res_pred = i.relation.name
-                    red_obj = i.relation.entity2
-                    if(count == len(listofknowledge)):
-                        output += str(res_sub) + " " + \
-                            str(res_pred) + " " + str(red_obj)
+                for sentence in results:
+                    sub = sentence.relation.entity1
+                    pred = sentence.relation.name
+                    obj = sentence.relation.entity2
+                    if count == len(results):
+                        output += sub + " " + pred + " " + obj
                         break
-                    output += str(res_sub) + " " + str(res_pred) + \
-                        " " + str(red_obj) + " and "
+                    output += sub + " " + pred + " " + obj + " and "
                     count += 1
                 return reflect(output)
             return smart_response(statement)
@@ -111,85 +83,84 @@ def analyse(statement, semantic):
             return smart_response(statement)
 
     elif len(tokens) == 4 or len(tokens) == 5:
-        # Example "Where is my phone" / "where is the phone"- must search in triplos for answear
-        if (tags[0][1] == 'WRB') and ('VB' in tags[1][1]) and ('DT' or 'PRP$' in tags[2][1]) \
-                and ('NN' in tags[3][1]):
-            obj = tags[2][0] + " " + tags[3][0]
-            flag = False
-            # Search in triples for obj
-            for i in range(0, len(semantic.query_local("user", obj))):
-                res_sub = semantic.query_local("user", obj)[i].relation.entity1
-                res_pred = semantic.query_local("user", obj)[i].relation.name
-                red_obj = semantic.query_local("user", obj)[i].relation.entity2
-                # res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
-                if not verify_in(nltk.pos_tag(nltk.word_tokenize(res_pred))):
+        # Examples:
+        # - Where is my phone?
+        # - Where is the phone?
+        if condition.wrb_vb_dt_nn():
+            obj = words[2] + " " + words[3]
+            last_sentence = False
+            results = semantic.query_local('user', obj)
+            for sentence in results:
+                res_sub = sentence.relation.entity1
+                res_pred = sentence.relation.name
+                red_obj = sentence.relation.entity2
+                if not condition.has_preposition(nltk.pos_tag(nltk.word_tokenize(res_pred))):
                     continue
-                if tags[1][0] in res_pred:
-                    # Check if verb is the same, is != are
-                    if not flag:
+                if words[1] in res_pred:
+                    if not last_sentence:
                         output = '{} {} {}'.format(res_sub, res_pred, red_obj)
                     else:
                         res_pred = nltk.word_tokenize(res_pred)
                         output += ", " + '{} {}'.format(res_pred[1], red_obj)
-                    flag = True
-            if flag:
+                    last_sentence = True
+            if last_sentence:
                 return reflect(output)
             else:
-                # Come up with something smart
-                output = "I don't know where " + \
-                    reflect(tags[2][0]) + " " + \
-                    reflect(tags[3][0]) + " " + tags[1][0]
+                output = "I don't know where " + reflect(words[2]) + " " + reflect(words[3]) + " " + words[1]
                 return output
 
-        # Example "Tiago is my friend" / "Tiago is a friend"- must search in triplos for answear
-        elif(tags[0][1] == 'NN') and ('VBZ' in tags[1][1]) and ('DT' or 'PRP$' in tags[2][1]) \
-                and ('NN' in tags[3][1]):
-            s = tags[0][0]
-            pred = tags[1][0]
-            obj = tags[2][0] + " " + tags[3][0]
-            a = Association(s, pred, obj)
+        # Examples:
+        # - John is my friend
+        # - John is a friend
+        elif condition.nn_vbz_dt_nn(words[1] + " " + words[2]):
+            sub = words[0]
+            pred = words[1]
+            obj = words[2] + " " + words[3]
+            if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
+                semantic.remove_instances(sub=sub, pred=pred)
+            a = Association(sub, pred, obj)
             da = Declaration("user", a)
-            if (len(semantic.query_local('user', None, pred, obj)) > 0 and (obj == 'my mom'or obj == 'my mother' or obj == 'my father' or obj == 'my dad' or obj == "my girlfriend")):
-                semantic.remove_instances(None, pred, obj)
             semantic.insert(da)
             output = random.choice(responses) + " " + reflect(statement)
             return output
 
-        # My name is walter white example with last name
-        # Example "My name is Jesus" , sometimes the name as JJ (david) tag, other times as NN (jesus)
-
-        elif (tags[0][1] == 'PRP$') and ('NN' in tags[1][1]) and ('VB' in tags[2][1]) \
-                and ('JJ' or 'NN' in tags[3][1]):
+        # Examples:
+        # - My name is John Smith
+        # - My name is Jesus
+        # Sometimes it detects JJ and NN in anothers
+        elif condition.prp_nn_vb_nn():
+            sub = words[0] + " " + words[1]
+            pred = words[2]
             # With last name
             if len(tags) == 5:
-                s = tags[0][0] + " " + tags[1][0]
-                pred = tags[2][0]
-                obj = tags[3][0] + " " + tags[4][0]
-                output = random.choice(responses) + " your " + tags[1][0] + " is " + tags[3][0] \
-                    + " " + tags[4][0]
+                obj = words[3] + " " + words[4]
             else:
-                s = tags[0][0] + " " + tags[1][0]
-                pred = tags[2][0]
-                obj = tags[3][0]
-                output = random.choice(
-                    responses) + " your " + tags[1][0] + " is " + tags[3][0]
-            if len(semantic.query_local('user', s, pred)) > 0:
-                semantic.remove_instances(s, pred, obj)
-            a = Association(s, pred, obj)
+                obj = words[3]
+            output = random.choice(responses) + " your " + words[1] + " is " + obj
+            if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
+                semantic.remove_instances(sub, pred, obj)
+            a = Association(sub, pred, obj)
             dec = Declaration('user', a)
             semantic.insert(dec)
             return output
 
-        # Example "A cat is an animal" or "A pussy is a cat"
-        elif tags[0][1] == 'DT' and 'NN' in tags[1][1] and 'VB' in tags[2][1] \
-                and 'DT' in tags[3][1] and 'NN' in tags[4][1]:
-            sub = tags[1][0]
-            pred = tags[2][0] + " " + tags[3][0]
-            obj = tags[4][0]
-            s = Subtype(sub, obj)
-            ds = Declaration('user', s)
+        # Examples:
+        # - A cat is an animal
+        # - A pussycat is a cat
+        elif condition.dt_nn_vbz_dt_nn() or condition.nn_vbz_dt_nn_subtype():
+            if condition.dt_nn_vbz_dt_nn():
+                sub = words[1]
+                pred = words[2] + " " + words[3]
+                obj = words[4]
+            else:
+                sub = words[0]
+                pred = words[1] + " " + words[2]
+                obj = words[3]
+            subtype = Subtype(sub, obj)
+            ds = Declaration('user', subtype)
             semantic.insert(ds)
             if len(semantic.query_local('user', e1=obj, rel='subtype')) > 0:
+                # Get class in top of hierarchy
                 root = semantic.path_to_root(sub)[-1]
                 if root[0] in VOWELS:
                     a = Association(sub, 'is an', root)
@@ -201,91 +172,54 @@ def analyse(statement, semantic):
                     da = Declaration('user', a)
                     semantic.insert(da)
                     return "So, {} is a {}".format(sub, root)
-            return "So, {} {} {}".format(sub, pred, obj)
+            return random.choice(responses) + " {} {} {}".format(sub, pred, obj)
 
-        # Example "Cat is an animal" or "Pussy is a cat"
-        elif 'NN' in tags[0][1] and 'VB' in tags[1][1] and 'DT' in tags[2][1] and 'NN' in tags[3][1]:
-            sub = tags[0][0]
-            pred = tags[1][0] + " " + tags[2][0]
-            obj = tags[3][0]
-            s = Subtype(sub, obj)
-            ds = Declaration('user', s)
-            semantic.insert(ds)
-            if len(semantic.query_local('user', e1=obj, rel='subtype')) > 0:
-                root = semantic.path_to_root(sub)[-1]
-                if root[0] in VOWELS:
-                    a = Association(sub, 'is an', root)
-                    da = Declaration('user', a)
-                    semantic.insert(da)
-                    return "So, {} is an {}".format(sub, root)
-                else:
-                    a = Association(sub, 'is a', root)
-                    da = Declaration('user', a)
-                    semantic.insert(da)
-                    return "So, {} is a {}".format(sub, root)
-            return "So, {} {} {}".format(sub, pred, obj)
-
-        # Example "What is my name" / any question with what + 3 parcels
-        elif (tags[0][1] == 'WP') and ('VB' in tags[1][1]) and (tags[2][1] == 'PRP$') and (
-                tags[3][1] in ('NN' or 'JJ')):
-            obj = tags[2][0] + " " + tags[3][0]
-            flag = False
-            # Search in triples for obj
-            for i in range(0, len(semantic.query_local("user", obj))):
-                res_sub = semantic.query_local("user", obj)[i].relation.entity1
-                res_pred = semantic.query_local("user", obj)[i].relation.name
-                red_obj = semantic.query_local("user", obj)[i].relation.entity2
-                # res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
-                if tags[1][0] in res_pred:
-                    # Check if verb is the same, is != are
-                    flag = True
+        # Examples:
+        # - What is my name?
+        # Any question with 'What' that has 4 words
+        elif condition.wp_vbz_prp_nn():
+            obj = words[2] + " " + words[3]
+            same_verb = False
+            results = semantic.query_local('user', e1=obj)
+            for sentence in results:
+                res_sub = sentence.relation.entity1
+                res_pred = sentence.relation.name
+                red_obj = sentence.relation.entity2
+                if words[1] in res_pred:
+                    same_verb = True
                     break
-            print("Asking about what " + tags[3][0])
-            if flag:
+            print("Asking about what " + words[3])
+            if same_verb:
                 output = '{} {} {}'.format(res_sub, res_pred, red_obj)
                 return reflect(output)
             else:
-                # Come up with something smart
-                output = "I don't know what " + \
-                    reflect(tags[2][0]) + " " + \
-                    reflect(tags[3][0]) + " " + tags[1][0]
-                return output
-        elif (tags[0][1] == 'WP') and ('VB' in tags[1][1]) and (tags[2][1] == 'PRP$') and (
-                tags[3][1] in ('NN' or 'JJ')):
-            pass
+                return "I don't know what " + reflect(words[2]) + " " + \
+                       reflect(words[3]) + " " + words[1]
         else:
             return smart_response(statement)
 
     elif len(tokens) == 3:
-        # who is Tiago?"
-        if(tags[0][1] == 'WP') and ('VBZ' in tags[1][1]) and ('RB'or 'NN' in tags[2][1]):
-                #obj = "Tiago"
-            obj = tags[2][0]
-            print(obj)
-            print(semantic.query_local('user', obj))
-            flag = False
-            # Search in triples for obj
-            for i in range(0, len(semantic.query_local("user", obj))):
-                print(tags[1][0] + "!!!!!!!!!!!!!!!")
-
-                res_sub = semantic.query_local("user", obj)[i].relation.entity1
-                res_pred = semantic.query_local("user", obj)[i].relation.name
-                res_obj = semantic.query_local("user", obj)[i].relation.entity2
-                # res_sub, res_pred, red_obj = triple_store.triples(obj, None, None)[i]
-                if tags[1][0] in res_pred:
-                    # Check if verb is the same, is != are
-                    if not flag:
+        # Examples:
+        # - Who is John?
+        if condition.wp_vbz_rb():
+            obj = words[2]
+            same_verb = False
+            results = semantic.query_local('user', e1=obj)
+            for sentence in results:
+                res_sub = sentence.relation.entity1
+                res_pred = sentence.relation.name
+                res_obj = sentence.relation.entity2
+                if words[1] in res_pred:
+                    if not same_verb:
                         output = '{} {} {}'.format(res_sub, res_pred, res_obj)
                     else:
                         res_pred = nltk.word_tokenize(res_pred)
                         output += ", " + '{} {}'.format(res_pred[1], res_obj)
-                    print(res_sub + " " + res_pred + " " + res_obj)
-                    flag = True
-            if flag:
+                    same_verb = True
+            if same_verb:
                 return reflect(output)
             else:
-                # Come up with something smart
-                output = "I don't know who is " + tags[2][0]
+                output = "I don't know who is " + words[2]
                 return output
         else:
             return smart_response(statement)
@@ -295,13 +229,14 @@ def analyse(statement, semantic):
 
 def main():
     semantic_network = SemanticNetwork()
+    condition = Condition()
     while True:
         statement = input("You > ")
         statement = statement.lower()
         if statement == "bye":
             print("Bot > bye")
             break
-        print("Bot > " + analyse(statement, semantic_network))
+        print("Bot > " + analyse(statement, semantic_network, condition))
 
 
 if __name__ == "__main__":
