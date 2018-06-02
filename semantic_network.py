@@ -68,6 +68,7 @@ class SemanticNetwork:
         for query in queries:
             self.declarations.remove(query)
 
+
     def path_to_root(self, entity):
         direct_relations = [d for d in self.declarations if d.relation.entity1 == entity]
         if direct_relations is []:
