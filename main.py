@@ -110,6 +110,7 @@ def analyse(statement, semantic, condition):
         # Examples:
         # - Where is my phone?
         # - Where is the phone?
+
         if condition.wrb_vb_dt_nn():
             obj = words[2] + " " + words[3]
             last_sentence = False
@@ -131,7 +132,11 @@ def analyse(statement, semantic, condition):
                 return reflect(output)
             else:
                 output = "I don't know where " + reflect(words[2]) + " " + reflect(words[3]) + " " + words[1]
+                randomknowledge=randomKnowledgeAbout(obj,semantic)
+                if(randomknowledge!=-1):
+                    output+= " but i know that "+randomknowledge
                 return output
+
 
         # Examples:
         # - John is my friend
@@ -215,9 +220,14 @@ def analyse(statement, semantic, condition):
             if same_verb:
                 output = '{} {} {}'.format(res_sub, res_pred, red_obj)
                 return reflect(output)
+
             else:
-                return "I don't know what " + reflect(words[2]) + " " + \
+                output="I don't know what " + reflect(words[2]) + " " + \
                        reflect(words[3]) + " " + words[1]
+                randomknowledge=randomKnowledgeAbout(obj,semantic)
+                if(randomknowledge!=-1):
+                    output+= " but i know that "+randomknowledge
+                return output
 
 
         # Examples:
@@ -248,6 +258,9 @@ def analyse(statement, semantic, condition):
                 return reflect(output)
             else:
                 output = "I don't know if " + reflect(words[1]) + " " +pred + " " + obj
+                randomknowledge=randomKnowledgeAbout(obj,semantic)
+                if(randomknowledge!=-1):
+                    output+= " but i know that "+randomknowledge
                 return output
 
         # Examples:
@@ -301,12 +314,33 @@ def analyse(statement, semantic, condition):
             if same_verb:
                 return reflect(output)
             else:
+
                 output = "I don't know who is " + words[2]
+                randomknowledge=randomKnowledgeAbout(obj,semantic)
+                if(randomknowledge!=-1):
+                    output+= " but i know that "+randomknowledge
                 return output
+
         else:
             return smart_response(statement)
     else:
         return smart_response(statement)
+
+def randomKnowledgeAbout(entity,semantic):
+    results = semantic.query_local('user', e1=entity) + semantic.query_local('user', e2=entity)
+    split = entity.split(" ")
+    if(len(split)>1):
+        results+=semantic.query_local('user', e1=split[1]) + semantic.query_local('user', e2=split[1])
+    if len(results) > 0:
+        rand = random.randint(0,len(results)-1)
+        sub = results[rand].relation.entity1
+        pred = results[rand].relation.name
+        obj = results[rand].relation.entity2
+
+        output= sub + " " + pred + " "+obj
+        return reflect(output)
+    else:
+        return -1
 
 
 def main():

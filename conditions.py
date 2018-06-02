@@ -83,6 +83,11 @@ class Condition:
                and (self.statements[2] == 'DT' or self.statements[2] == 'PRP$') \
                and self.statements[3] == 'NN'
 
+    def wrb_vb_nn(self):
+        return self.statements[0] == 'WRB' \
+               and (self.statements[1] == 'VB' or self.statements[1] == 'VBZ') \
+               and self.statements[2] == 'NN'
+
     def nn_vbz_dt_nn(self, sentence):
         return self.statements[0] == 'NN' \
                and self.statements[1] == 'VBZ' \
