@@ -1,14 +1,11 @@
 import nltk
 import re
 import random
-from reflections import reflections
+from reflections import reflections, another_reflect
 from responses import responses, smart_responses
 from semantic_network import *
 from constants import *
 from conditions import Condition
-
-
-# For statement, my phone is on the table create semantic relations (my,phone), (belongs,me) (is,in) (table)
 
 
 def smart_response(statement):
@@ -27,13 +24,21 @@ def reflect(fragment):
     return ' '.join(tokens)
 
 
+def another_reflection(fragment):
+    tokens = fragment.lower().split()
+    for i, token in enumerate(tokens):
+        if token in another_reflect:
+            tokens[i] = another_reflect[token]
+    return ' '.join(tokens)
+
+
 def analyse(statement, semantic, condition):
     tokens = nltk.word_tokenize(statement)
     tags = nltk.pos_tag(tokens)
 
     # Print values
-    #for sentence in tags:
-        #print(sentence)
+    for sentence in tags:
+        print(sentence)
 
     words = [word for word, statement in tags]
     statements = [statement for word, statement in tags]
@@ -56,27 +61,28 @@ def analyse(statement, semantic, condition):
             output = random.choice(responses) + " " + reflect(statement)
             return output
 
-        #Examples:
+        # Examples:
         # - What is the color of the boat?
         elif condition.wp_vbz_dt_nn_in_dt_nn():
             sub = words[3]
             obj = words[6]
-            results=semantic.query_local('user', e2=sub, rel='subtype')
+            results = semantic.query_local('user', e2=sub, rel='subtype')
             if len(semantic.query_local('user', e2=sub, rel='subtype')) > 0:
                 for sentence in results:
                     res_sub = sentence.relation.entity1
                     res_pred = sentence.relation.name
                     red_obj = sentence.relation.entity2
-                if(red_obj== sub):
-                    res_results =semantic.query_local('user',e2=(res_sub+" "+ obj))
+                if(red_obj == sub):
+                    res_results = semantic.query_local(
+                        'user', e2=(res_sub + " " + obj))
                     for sentences in res_results:
                         sub_resultes = sentences.relation.entity1
                         pred_resultes = sentences.relation.name
                         obj_resultes = sentences.relation.entity2
 
-                    output = '{} {} {}'.format(sub_resultes, pred_resultes, obj_resultes)
+                    output = '{} {} {}'.format(
+                        sub_resultes, pred_resultes, obj_resultes)
                     return reflect(output)
-
 
             return smart_response(statement)
 
@@ -88,7 +94,11 @@ def analyse(statement, semantic, condition):
                 sub = words[5] + " " + words[6]
             else:
                 sub = words[5]
-            results = semantic.query_local('user', e1=sub) + semantic.query_local('user', e2=sub)
+
+            # change from me to I
+            sub = another_reflection(sub)
+            results = semantic.query_local(
+                'user', e1=sub) + semantic.query_local('user', e2=sub)
             if len(results) > 0:
                 output = ""
                 count = 1
@@ -102,7 +112,7 @@ def analyse(statement, semantic, condition):
                     output += sub + " " + pred + " " + obj + " and "
                     count += 1
                 return reflect(output)
-            return smart_response(statement)
+            return "I don't know anything about " + reflect(sub)
         else:
             return smart_response(statement)
 
@@ -131,16 +141,18 @@ def analyse(statement, semantic, condition):
             if last_sentence:
                 return reflect(output)
             else:
-                output = "I don't know where " + reflect(words[2]) + " " + reflect(words[3]) + " " + words[1]
-                randomknowledge=randomKnowledgeAbout(obj,semantic)
-                if(randomknowledge!=-1):
-                    output+= " but i know that "+randomknowledge
+                output = "I don't know where " + \
+                    reflect(words[2]) + " " + \
+                    reflect(words[3]) + " " + words[1]
+                randomknowledge = randomKnowledgeAbout(obj, semantic)
+                if(randomknowledge != -1):
+                    output += " but i know that " + randomknowledge
                 return output
-
 
         # Examples:
         # - John is my friend
         # - John is a friend
+        # - Subtype para alguns casos
         elif condition.nn_vbz_dt_nn(words[1] + " " + words[2]):
             sub = words[0]
             pred = words[1]
@@ -165,7 +177,8 @@ def analyse(statement, semantic, condition):
                 obj = words[3] + " " + words[4]
             else:
                 obj = words[3]
-            output = random.choice(responses) + " your " + words[1] + " is " + obj
+            output = random.choice(responses) + " " + reflect(words[0]) + " " + \
+                words[1] + " " + pred + " " + obj
             if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
                 semantic.remove_instances(sub, pred, obj)
             a = Association(sub, pred, obj)
@@ -222,26 +235,25 @@ def analyse(statement, semantic, condition):
                 return reflect(output)
 
             else:
-                output="I don't know what " + reflect(words[2]) + " " + \
-                       reflect(words[3]) + " " + words[1]
-                randomknowledge=randomKnowledgeAbout(obj,semantic)
-                if(randomknowledge!=-1):
-                    output+= " but i know that "+randomknowledge
+                output = "I don't know what " + reflect(words[2]) + " " + \
+                    reflect(words[3]) + " " + words[1]
+                randomknowledge = randomKnowledgeAbout(obj, semantic)
+                if(randomknowledge != -1):
+                    output += " but i know that " + randomknowledge
                 return output
-
 
         # Examples:
         # - Do i have a cat
         elif condition.vbp_nns_vbp_dt_nn():
             obj = words[4]
             sub = words[1]
-            pred =words[2]+" "+words[3]
-            another_case=words[3]+" "+words[4]
+            pred = words[2] + " " + words[3]
+            another_case = words[3] + " " + words[4]
             last_sentence = False
 
-            results = semantic.query_local('user',e1=sub ,e2=obj)
-            if (results==[]):
-                results = semantic.query_local('user',e1=sub ,e2=another_case)
+            results = semantic.query_local('user', e1=sub, e2=obj)
+            if (results == []):
+                results = semantic.query_local('user', e1=sub, e2=another_case)
             for sentence in results:
                 res_sub = sentence.relation.entity1
                 res_pred = sentence.relation.name
@@ -257,30 +269,31 @@ def analyse(statement, semantic, condition):
             if last_sentence:
                 return reflect(output)
             else:
-                output = "I don't know if " + reflect(words[1]) + " " +pred + " " + obj
-                randomknowledge=randomKnowledgeAbout(obj,semantic)
-                if(randomknowledge!=-1):
-                    output+= " but i know that "+randomknowledge
+                output = "I don't know if " + \
+                    reflect(words[1]) + " " + pred + " " + obj
+                randomknowledge = randomKnowledgeAbout(obj, semantic)
+                if(randomknowledge != -1):
+                    output += " but I know that " + randomknowledge
                 return output
 
         # Examples:
         # - I have a cat
         elif condition.nns_vbp_dt_nn():
             sub = words[0]
-            pred = words[1]+ " " + words[2]
-            # With last name
+            pred = words[1] + " " + words[2]
             if len(tags) == 5:
                 obj = words[3] + " " + words[4]
             else:
                 obj = words[3]
-            output = random.choice(responses) + " you " + words[1] + " a " + obj
+            output = random.choice(responses) + " " + reflect(sub) + " " + \
+                pred + " " + obj
             if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
                 semantic.remove_instances(sub, pred, obj)
-            if(words[3]=='green' or words[3]=='blue' or words[3]=='red' or words[3]=='yellow' or words[3]=='orange'):
+            if(words[3] == 'green' or words[3] == 'blue' or words[3] == 'red' or words[3] == 'yellow' or words[3] == 'orange'):
                 subtype = Subtype(words[3], 'color')
                 ds = Declaration('user', subtype)
                 semantic.insert(ds)
-            elif(words[3]=='new' or words[3]=='old'):
+            elif(words[3] == 'new' or words[3] == 'old'):
                 subtype = Subtype(words[3], 'age')
                 ds = Declaration('user', subtype)
                 semantic.insert(ds)
@@ -315,10 +328,10 @@ def analyse(statement, semantic, condition):
                 return reflect(output)
             else:
 
-                output = "I don't know who is " + words[2]
-                randomknowledge=randomKnowledgeAbout(obj,semantic)
-                if(randomknowledge!=-1):
-                    output+= " but i know that "+randomknowledge
+                output = "I don't know " + words[0] + " is " + words[2]
+                randomknowledge = randomKnowledgeAbout(obj, semantic)
+                if(randomknowledge != -1):
+                    output += " but i know that " + randomknowledge
                 return output
 
         else:
@@ -326,18 +339,21 @@ def analyse(statement, semantic, condition):
     else:
         return smart_response(statement)
 
-def randomKnowledgeAbout(entity,semantic):
-    results = semantic.query_local('user', e1=entity) + semantic.query_local('user', e2=entity)
+
+def randomKnowledgeAbout(entity, semantic):
+    results = semantic.query_local(
+        'user', e1=entity) + semantic.query_local('user', e2=entity)
     split = entity.split(" ")
-    if(len(split)>1):
-        results+=semantic.query_local('user', e1=split[1]) + semantic.query_local('user', e2=split[1])
+    if(len(split) > 1):
+        results += semantic.query_local(
+            'user', e1=split[1]) + semantic.query_local('user', e2=split[1])
     if len(results) > 0:
-        rand = random.randint(0,len(results)-1)
+        rand = random.randint(0, len(results) - 1)
         sub = results[rand].relation.entity1
         pred = results[rand].relation.name
         obj = results[rand].relation.entity2
 
-        output= sub + " " + pred + " "+obj
+        output = sub + " " + pred + " " + obj
         return reflect(output)
     else:
         return -1
