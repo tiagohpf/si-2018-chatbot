@@ -11,7 +11,7 @@ reflections = {
     "you'll": "I will",
     "your": "my",
     "yours": "mine",
-    "you": "me",
+    "you": "I",
     "me": "you"
 }
 
