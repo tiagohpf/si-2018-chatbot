@@ -55,13 +55,6 @@ class Condition:
                and (self.statements[5] == 'PRP$' or self.statements[5] == 'DT') \
                and self.statements[6] == 'NN'
 
-    def wp_vbp_prp_vb_in(self):
-        return self.statements[0] == 'WP' \
-               and self.statements[1] == 'VBP' \
-               and self.statements[2] == 'PRP' \
-               and self.statements[3] == 'VB' \
-               and self.statements[4] == 'IN'
-
     def dt_nn_vbz_dt_nn(self):
         return self.statements[0] == 'DT' \
                and self.statements[1] == 'NN' \
@@ -113,7 +106,7 @@ class Condition:
                and (self.statements[3] == 'NN' or self.statements[3] == 'JJ')
 
     def nns_vbp_dt_nn(self):
-        return (self.statements[0] == 'NNS'  or self.statements[0] == 'NN')\
+        return (self.statements[0] == 'NNS' or self.statements[0] == 'NN') \
                and self.statements[1] == 'VBP' \
                and self.statements[2] == 'DT' \
                and (self.statements[3] == 'NN' or self.statements[3] == 'JJ')

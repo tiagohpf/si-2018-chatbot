@@ -48,6 +48,12 @@ def remove_queries(queries, semantic):
         semantic.remove_instances(sub_to_remove, pred_to_remove, obj_to_remove)
 
 
+def get_verb_dt(next_letter):
+    if next_letter in VOWELS:
+        return 'is an'
+    return 'is a'
+
+
 def analyse(statement, semantic, condition):
     global red_obj
     tokens = nltk.word_tokenize(statement)
@@ -76,119 +82,39 @@ def analyse(statement, semantic, condition):
             if len(semantic.query_local('user', sub, pred)) > 0:
                 semantic.remove_instances(sub, pred)
             semantic.insert_instance(dec)
+            print(semantic.declarations)
             return random.choice(responses) + ' ' + reflect(statement)
 
         # Examples:
         # - What is the color of my boat?
+        # - What is the age of my cat?
+        # Ask only about the age or the color
         elif condition.wp_vbz_dt_nn_in_dt_nn():
-            print('wp_vbz_dt_nn_in_dt_nn()')
+            print('wp_vbz_dt_nn_in_dt_nn')
             sub = words[3]
-            out = ""
+            if sub != 'age' and sub != 'color':
+                return "Sorry, I don't know " + reflect(statement)
             obj = words[5] + ' ' + words[6]
-            queries = semantic.query_local('user', e2=sub, rel='subtype')
-            print(queries)
-            if len(queries) > 0:
-                output = ''
-                for sentence in queries:
-                    res_sub = sentence.relation.entity1
-                    red_obj = sentence.relation.entity2
-                if red_obj == sub:
-                    res_results = semantic.query_local('user', e2=obj)
-                    for sentences in res_results:
-                        sub_results = sentences.relation.entity1
-                        pred_results = sentences.relation.name
-                        if pred_results in VOWELS:
-                            output += "an " + res_sub + " " + words[6]
-                        else:
-                            output += "assoc " + res_sub + " " + words[6]
-                        out = '{} {} {}'.format(
-                            reflect(sub_results), pred_results, output)
-                        return out
-                output = "I dont know that but i know that " + \
-                         random_knowledge_about(obj, semantic)
-                return output
+            # Search for "have(I, my cat)" to assure that I have a cat
+            pred_have = semantic.query_local('user', e2=obj, rel='have')
+            if len(pred_have) > 0:
+                # Search for "adjective(my cat, age)"
+                pred_adjs = semantic.query_local('user', e1=obj, rel='adjective')[0]
+                # Search for "member(red, color)"
+                content = semantic.query_local('user', e1=pred_adjs.relation.entity2, e2=sub, rel='member')
+                if len(content) > 0:
+                    return 'The ' + sub + ' of ' + reflect(obj) + ' is ' + content[0].relation.entity1
+                else:
+                    return "I don't know the " + sub + ' of ' + reflect(obj)
             else:
-                queries = semantic.query_local('user', e1=obj)
-
-                output = "I dont know that but i know that " + \
-                         random_knowledge_about(obj, semantic)
-                print(output)
-                count = 1
-                for sentence in queries:
-                    sub = sentence.relation.entity1
-                    pred = sentence.relation.name
-                    obj = sentence.relation.entity2
-                    output += reflect(sub + " " + pred + " " + obj)
-                    adjectives = semantic.query_local(
-                        'user', e1=obj, rel='adjective')
-                    for adjective in adjectives:
-                        if count == 1:
-                            if obj[0] in VOWELS:
-                                output += " an " + adjective.relation.entity2 + " " + adjective.relation.entity1
-                            else:
-                                output += " assoc " + adjective.relation.entity2 + " " + adjective.relation.entity1
-                        elif 1 < count < len(adjectives):
-                            if obj[0] in VOWELS:
-                                output += " and an " + adjective.relation.entity2 + \
-                                          " " + adjective.relation.entity1
-                            else:
-                                output += " and assoc " + adjective.relation.entity2 + " " + adjective.relation.entity1
-                        elif count == len(adjectives):
-                            if obj[0] in VOWELS:
-                                output += " and an " + adjective.relation.entity2 + \
-                                          " " + adjective.relation.entity1
-                            else:
-                                output += " and assoc " + adjective.relation.entity2 + " " + adjective.relation.entity1
-                            break
-                        count += 1
+                output = "You don't have "
+                if words[6][0] in VOWELS:
+                    output += 'an '
+                else:
+                    output += 'a '
+                output += words[6]
                 return output
             return smart_response(statement)
-
-        # Examples:
-        # - What do you know about John?
-        # - What do you know about my phone?
-        elif condition.wp_vbp_prp_vb_in():
-            print('wp_vbp_prp_vb_in || wp_vbz_rb')
-            if len(tokens) == 7:
-                sub = words[5] + ' ' + words[6]
-            else:
-                sub = words[5]
-            sub = another_reflection(sub)
-            queries = semantic.query_local(
-                'user', e1=sub) + semantic.query_local('user', e2=sub)
-            have_results = semantic.query_local('user', e1='i', rel='have')
-            if len(queries) > 0:
-                output = ""
-                count = 1
-                for sentence in queries:
-                    sub = sentence.relation.entity1
-                    pred = sentence.relation.name
-                    obj = sentence.relation.entity2
-                    if pred == 'subtype':
-                        if obj[0] in VOWELS:
-                            pred = 'is an'
-                        else:
-                            pred = 'is assoc'
-                        if count == 1:
-                            output += sub + " " + pred + " " + obj
-                        elif 1 < count < len(queries):
-                            output += ", " + pred + " " + obj
-                        elif count == len(queries):
-                            output += " and " + pred + " " + obj
-                            break
-                    elif pred == 'have' or pred == 'adjective' or pred == 'is':
-                        if count == 1:
-                            output += sub + " is " + obj
-                        elif 1 < count < len(queries) - len(have_results):
-                            if pred != 'have':
-                                output += ", " + obj
-                        elif count == len(queries) - len(have_results):
-                            if pred != 'have':
-                                output += " and " + obj
-                            break
-                    count += 1
-                return reflect(output)
-            return "I don't know anything about " + reflect(sub)
         else:
             return smart_response(statement)
 
@@ -198,24 +124,13 @@ def analyse(statement, semantic, condition):
         # - Where is the phone?
         if condition.wrb_vb_dt_nn():
             print('wrb_vb_dt_nn')
-            obj = words[2] + " " + words[3]
-            last_sentence = False
-            queries = semantic.query_local('user', obj)
-            for sentence in queries:
-                res_sub = sentence.relation.entity1
-                res_pred = sentence.relation.name
-                red_obj = sentence.relation.entity2
-                if not condition.has_preposition(nltk.pos_tag(nltk.word_tokenize(res_pred))):
-                    continue
-                if words[1] in res_pred:
-                    if not last_sentence:
-                        output = '{} {} {}'.format(res_sub, res_pred, red_obj)
-                    else:
-                        res_pred = nltk.word_tokenize(res_pred)
-                        output += ", " + '{} {}'.format(res_pred[1], red_obj)
-                    last_sentence = True
-            if last_sentence:
-                return reflect(output)
+            obj = words[2] + ' ' + words[3]
+            places = semantic.get_places_of_obj(obj)[1:]
+            if len(places) > 0:
+                output = obj + ' '
+                for place in places:
+                    output += place + ', '
+                return output[:-2]
             else:
                 output = "I don't know where " + \
                          reflect(words[2]) + " " + \
@@ -235,12 +150,12 @@ def analyse(statement, semantic, condition):
             obj = words[2] + ' ' + words[3]
             assoc = Association(sub, pred, obj)
             dec = Declaration('user', assoc)
-            queries = semantic.query_local(user='user', e1=sub, rel=pred)
-            if len(queries) == 0:
+            pred_have = semantic.query_local(user='user', e1=sub, rel=pred)
+            if len(pred_have) == 0:
                 semantic.insert_instance(dec)
             else:
                 substituted = False
-                for declaration in queries:
+                for declaration in pred_have:
                     if words[3] in declaration.relation.entity2:
                         sub_to_remove = declaration.relation.entity1
                         pred_to_remove = declaration.relation.name
@@ -267,8 +182,8 @@ def analyse(statement, semantic, condition):
                 obj = words[3]
             output = random.choice(responses) + " " + reflect(words[0]) + " " + \
                      words[1] + " " + pred + " " + obj
-            if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
-                semantic.remove_instances(sub, pred)
+            pred_have = semantic.query_local('user', e1=sub, rel=pred)
+            remove_queries(pred_have, semantic)
             assoc = Association(sub, pred, obj)
             dec = Declaration('user', assoc)
             semantic.insert_instance(dec)
@@ -293,10 +208,7 @@ def analyse(statement, semantic, condition):
             if len(semantic.query_local('user', e1=obj, rel='subtype')) > 0:
                 # Get class in top of hierarchy
                 root = semantic.path_to_root(sub)[-1]
-                if root[0] in VOWELS:
-                    sentence = 'is an'
-                else:
-                    sentence = 'is a'
+                sentence = get_verb_dt(root[0])
                 assoc = Association(sub, sentence, root)
                 dec = Declaration('user', assoc)
                 semantic.insert_instance(dec)
@@ -305,33 +217,29 @@ def analyse(statement, semantic, condition):
 
         # Examples:
         # - What is my name?
+        # - What is her age?
         # Any question with 'What' that has 4 words
         elif condition.wp_vbz_prp_nn():
             print('wp_vbz_prp_nn')
-            obj = words[2] + " " + words[3]
-            same_verb = False
-            queries = semantic.query_local('user', e1=obj)
-            for sentence in queries:
-                res_sub = sentence.relation.entity1
-                res_pred = sentence.relation.name
-                red_obj = sentence.relation.entity2
-                if words[1] in res_pred:
-                    same_verb = True
-                    break
-            if same_verb:
-                output = '{} {} {}'.format(res_sub, res_pred, red_obj)
+            pred = words[1]
+            obj = words[2] + ' ' + words[3]
+            declaration = semantic.query_local('user', e1=obj, rel=pred)
+            if len(declaration) > 0:
+                res_sub = declaration[0].relation.entity1
+                res_pred = declaration[0].relation.name
+                res_obj = declaration[0].relation.entity2
+                output = '{} {} {}'.format(res_sub, res_pred, res_obj)
                 return reflect(output)
-
             else:
                 output = "I don't know what " + reflect(words[2]) + " " + \
                          reflect(words[3]) + " " + words[1]
                 random_knowledge = random_knowledge_about(obj, semantic)
-                if (random_knowledge != -1):
+                if random_knowledge != -1:
                     output += " but i know that " + random_knowledge
                 return output
 
         # Examples:
-        # - Do I have assoc cat?
+        # - Do I have a cat?
         elif condition.vbp_nns_vbp_dt_nn():
             print('vbp_nns_vbp_dt_nn')
             sub = words[1]
@@ -340,11 +248,11 @@ def analyse(statement, semantic, condition):
             another_case = words[3] + " " + words[4]
             last_sentence = False
 
-            queries = semantic.query_local(
+            pred_have = semantic.query_local(
                 'user', e1=sub, e2=possessive_reflection(sub + ' ' + obj))
-            if not queries:
-                queries = semantic.query_local('user', e1=sub, e2=another_case)
-            for sentence in queries:
+            if not pred_have:
+                pred_have = semantic.query_local('user', e1=sub, e2=another_case)
+            for sentence in pred_have:
                 res_sub = sentence.relation.entity1
                 res_pred = sentence.relation.name
                 red_obj = sentence.relation.entity2
@@ -352,7 +260,7 @@ def analyse(statement, semantic, condition):
                 if red_obj in VOWELS:
                     pred = 'an'
                 else:
-                    pred = 'assoc'
+                    pred = 'a'
                 if pred in res_pred or words[2] in res_pred:
                     if not last_sentence:
                         output = '{} {} {} {} {}'.format(
@@ -392,11 +300,11 @@ def analyse(statement, semantic, condition):
                     my_obj = obj
                 # Search and remove "adjective(my cat, red)", "have(I, my cat)" and "subtype(red, color)"
                 # when changes color
-                queries = semantic.query_local('user', e1=my_obj, rel='adjective') \
-                          + semantic.query_local('user', e1=sub, e2=my_obj) \
-                          + semantic.query_local('user', rel='member', e2='color') \
-                          + semantic.query_local('user', rel='member', e2='age')
-                remove_queries(queries, semantic)
+                pred_have = semantic.query_local('user', e1=my_obj, rel='adjective') \
+                            + semantic.query_local('user', e1=sub, e2=my_obj) \
+                            + semantic.query_local('user', rel='member', e2='color') \
+                            + semantic.query_local('user', rel='member', e2='age')
+                remove_queries(pred_have, semantic)
                 # Insert "adjective(my cat, red)" or "adjective(cat, red)"
                 assoc = Association(my_obj, 'adjective', adj)
                 dec = Declaration('user', assoc)
@@ -416,7 +324,6 @@ def analyse(statement, semantic, condition):
                     semantic.insert_instance(dec)
                 output = random.choice(responses) + " " + reflect(sub) + " " + pred + " " \
                          + words[2] + " " + adj + " " + obj
-                print(semantic.declarations)
             else:
                 obj = words[3]
                 if 'have' in pred:
@@ -426,8 +333,8 @@ def analyse(statement, semantic, condition):
                     # Transform to "need(I, cat)"
                     my_obj = obj
                 # Remove relations with same subject and object
-                queries = semantic.query_local('user', e1=sub, e2=my_obj)
-                remove_queries(queries, semantic)
+                pred_have = semantic.query_local('user', e1=sub, e2=my_obj)
+                remove_queries(pred_have, semantic)
                 assoc = Association(sub, pred, my_obj)
                 dec = Declaration('user', assoc)
                 semantic.insert_instance(dec)
@@ -444,29 +351,23 @@ def analyse(statement, semantic, condition):
         if condition.wp_vbz_rb():
             print('wp_vbz_rb')
             sub = words[2]
-            # change from me to I
             sub = another_reflection(sub)
-            queries = semantic.query_local(
-                'user', e1=sub) + semantic.query_local('user', e2=sub)
-            if len(queries) > 0:
-                output = ""
+            pred_have = semantic.query_local('user', e1=sub) + semantic.query_local('user', e2=sub)
+            if len(pred_have) > 0:
+                output = ''
                 count = 1
-                for sentence in queries:
-                    sub = sentence.relation.entity1
-                    pred = sentence.relation.name
-                    obj = sentence.relation.entity2
-                    if pred == 'subtype':
-                        if obj[0] in VOWELS:
-                            pred = 'is an'
-                        else:
-                            pred = 'is assoc'
+                for sentence in pred_have:
+                    sub_res = sentence.relation.entity1
+                    pred_res = sentence.relation.name
+                    obj_res = sentence.relation.entity2
+                    if pred_res == 'subtype' or pred_res == 'member':
+                        pred_res = get_verb_dt(obj_res[0])
                     if count == 1:
-                        output += sub + " " + pred + " " + obj + " "
-                    elif 1 < count < len(queries):
-                        output += "and " + pred + " " + obj
-                    elif count == len(queries):
-                        output += "and " + pred + " " + obj
-                        break
+                        output += sub_res + ' ' + pred_res + ' ' + obj_res
+                    elif 1 < count < len(pred_have):
+                        output += ', ' + pred_res + ' ' + obj_res
+                    elif count == len(pred_have):
+                        output += ' and ' + pred_res + ' ' + obj_res
                     count += 1
                 return reflect(output)
             return "I don't know anything about " + reflect(sub)
@@ -491,18 +392,17 @@ def analyse(statement, semantic, condition):
 
 
 def random_knowledge_about(entity, semantic):
-    results = semantic.query_local(
-        'user', e1=entity) + semantic.query_local('user', e2=entity)
-    split = entity.split(" ")
+    results = semantic.query_local('user', e1=entity) + semantic.query_local('user', e2=entity)
+    split = entity.split(' ')
     if len(split) > 1:
-        results += semantic.query_local(
-            'user', e1=split[1]) + semantic.query_local('user', e2=split[1])
+        results += semantic.query_local('user', e1=split[1]) + semantic.query_local('user', e2=split[1])
     if len(results) > 0:
         rand = random.randint(0, len(results) - 1)
         sub = results[rand].relation.entity1
         pred = results[rand].relation.name
         obj = results[rand].relation.entity2
-
+        if pred == 'subtype' or pred == 'member':
+            pred = get_verb_dt(obj[0])
         output = sub + " " + pred + " " + obj
         return reflect(output)
     else:

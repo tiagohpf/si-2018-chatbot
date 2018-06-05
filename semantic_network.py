@@ -80,6 +80,17 @@ class SemanticNetwork:
             parents += self.path_to_root(d.relation.entity2)
         return parents
 
+    def get_places_of_obj(self, obj, rel=''):
+        locals = self.query_local('user', e1=obj)
+        if len(locals) == 0:
+            return [rel + ' ' + obj]
+        for local in locals:
+            sub_rel = local.relation.entity1
+            rel_name = local.relation.name
+            obj_rel = local.relation.entity2
+            if rel_name == 'is in' or rel_name == 'is on' or rel_name == 'is at':
+                return [rel + ' ' + sub_rel] + self.get_places_of_obj(obj_rel, rel_name)
+
     # Convert lists to set of characters
     def my_list2string(lst):
         if lst is []:
