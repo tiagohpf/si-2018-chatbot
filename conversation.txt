@@ -1,0 +1,93 @@
+Bot > Hello, welcome to our chat!
+
+You > My name is John
+
+Bot > So, your name is john
+
+You > What is my name?
+
+Bot > your name is john
+
+You > My name is Earl John
+
+Bot > I am glad to know that, your name is earl john
+
+You > what is my name?
+
+Bot > your name is earl john
+
+You > My phone is on the desk
+
+Bot > So, your phone is on the desk
+
+You > The desk is in the room
+
+Bot > I am glad to know that, the desk is in the room
+
+You > The room is in the house
+
+Bot > So, the room is in the house
+
+You > Where is my phone?
+
+Bot > your phone is on the desk, is in the room, is in the house
+
+You > Bob is my friend
+
+Bot > I am glad to know that, bob is your friend
+
+You > Bob is nice
+
+Bot > So, bob is nice
+
+You > A cat is an animal
+
+Bot > So, cat is an animal
+
+You > Bob is a cat
+
+Bot > So, bob is an animal
+
+You > Who is Bob?
+
+Bot > bob is your friend, is nice, is a cat and is an animal
+
+You > I have an old boat
+
+Bot > So, you have an old boat
+
+You > What is the age of my dog?
+
+Bot > You don't have a dog
+
+You > I have a new dog
+
+Bot > I see, you have a new dog
+
+You > What is the age of my dog?
+
+Bot > The age of your dog is new
+
+You > What is the color of my boat?
+
+Bot > I don't know the color of your boat
+
+You > What is the age of my boat?
+
+Bot > I don't know the age of your boat
+
+You > I have a black shoe
+
+Bot > I see, you have a black shoe
+
+You > What is the color of my shoe?
+
+Bot > The color of your shoe is black
+
+You > Do I have a boat?
+
+Bot > yes, you have a boat
+
+You > Do i have a cat?
+
+Bot > I don't know if you have a cat but I know that cat is an animal

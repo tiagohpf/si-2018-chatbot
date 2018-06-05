@@ -127,7 +127,7 @@ def analyse(statement, semantic, condition):
             obj = words[2] + ' ' + words[3]
             places = semantic.get_places_of_obj(obj)[1:]
             if len(places) > 0:
-                output = obj + ' '
+                output = reflect(obj) + ' '
                 for place in places:
                     output += place + ', '
                 return output[:-2]
@@ -137,7 +137,7 @@ def analyse(statement, semantic, condition):
                          reflect(words[3]) + " " + words[1]
                 random_knowledge = random_knowledge_about(obj, semantic)
                 if random_knowledge != -1:
-                    output += " but i know that " + random_knowledge
+                    output += " but I know that " + random_knowledge
                 return output
 
         # Examples:
@@ -412,14 +412,23 @@ def random_knowledge_about(entity, semantic):
 def main():
     semantic_network = SemanticNetwork()
     condition = Condition()
+    file = open('conversation.txt', 'w')
+    welcome = "Bot > Hello, welcome to our chat!"
+    print(welcome)
+    file.write(welcome + "\n\n")
     while True:
         statement = input("You > ")
-        statement = statement.lower().replace('?', '')
+        file.write("You > " + statement + "\n\n")
+        statement = statement.lower().replace('?', '').replace('.', '').strip()
         if statement == "bye":
-            print("Bot > bye")
+            bye = "Bot > Bye Bye! ;)"
+            print(bye)
+            file.write(bye + "\n")
             break
-        print("Bot > " + analyse(statement, semantic_network, condition))
-
+        response = "Bot > " + analyse(statement, semantic_network, condition)
+        print(response)
+        file.write(response + "\n\n")
+    file.close()
 
 if __name__ == "__main__":
     main()
