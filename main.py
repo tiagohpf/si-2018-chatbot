@@ -375,6 +375,7 @@ def analyse(statement, semantic, condition):
         # Examples:
         # - I have a red cat
         # - I have a cat
+        # - I need a red cat
         # - I need a cat
         elif condition.nns_vbp_dt_nn():
             print('nns_vbp_dt_nn')
