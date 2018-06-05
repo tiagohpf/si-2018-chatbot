@@ -48,8 +48,13 @@ class SemanticNetwork:
     def __str__(self):
         return self.my_list2string(self.declarations)
 
-    def insert(self, decl):
-        self.declarations.append(decl)
+    def insert_instance(self, declaration):
+        self.declarations.append(declaration)
+
+    def remove_instances(self, sub=None, pred=None, obj=None):
+        queries = self.query_local('user', sub, pred, obj)
+        for query in queries:
+            self.declarations.remove(query)
 
     def query_local(self, user=None, e1=None, rel=None, e2=None):
         self.query_result = \
@@ -63,11 +68,6 @@ class SemanticNetwork:
     def show_query_result(self):
         for d in self.query_result:
             print(str(d))
-
-    def remove_instances(self, sub=None, pred=None, obj=None):
-        queries = self.query_local('user', sub, pred, obj)
-        for query in queries:
-            self.declarations.remove(query)
 
     def path_to_root(self, entity):
         direct_relations = [d for d in self.declarations if d.relation.entity1 == entity]
