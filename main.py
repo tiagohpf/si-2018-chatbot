@@ -50,6 +50,7 @@ def analyse(statement, semantic, condition):
         # - My food is on the fridge
         # - The phone is on the table
         if condition.dt_nn_vb_in_dt_nn():
+            print('nn_vb_in_dt_nn')
             sub = words[0] + " " + words[1]
             pred = words[2] + " " + words[3]
             obj = words[4] + " " + words[5]
@@ -64,32 +65,62 @@ def analyse(statement, semantic, condition):
         # Examples:
         # - What is the color of the boat?
         elif condition.wp_vbz_dt_nn_in_dt_nn():
+            print('wp_vbz_dt_nn_in_dt_nn()')
             sub = words[3]
             obj = words[6]
-            results = semantic.query_local('user', e2=sub, rel='subtype')
-            if len(semantic.query_local('user', e2=sub, rel='subtype')) > 0:
+            results = semantic.query_local('user', e2=sub, rel='adjective')
+            print(semantic.query_local('user'))
+            if len(results) > 0:
                 for sentence in results:
                     res_sub = sentence.relation.entity1
                     res_pred = sentence.relation.name
                     red_obj = sentence.relation.entity2
                 if(red_obj == sub):
-                    res_results = semantic.query_local(
-                        'user', e2=(res_sub + " " + obj))
+                    res_results = semantic.query_local('user', e2=obj)
+                    print("res_results", res_results)
                     for sentences in res_results:
-                        sub_resultes = sentences.relation.entity1
-                        pred_resultes = sentences.relation.name
-                        obj_resultes = sentences.relation.entity2
-
-                    output = '{} {} {}'.format(
-                        sub_resultes, pred_resultes, obj_resultes)
+                        sub_results = sentences.relation.entity1
+                        pred_results = sentences.relation.name
+                        obj_results = sentences.relation.entity2
+                    output = '{} {} {}'.format(sub_results, pred_results, obj_results)
                     return reflect(output)
-
+            else:
+                results = semantic.query_local('user', e2=obj, rel='have')
+                print(results)
+                output = "I don't know that, but I know that "
+                count = 1
+                for sentence in results:
+                    sub = sentence.relation.entity1
+                    pred = sentence.relation.name
+                    obj = sentence.relation.entity2
+                    output += reflect(sub + " " + pred + " ")
+                    adjectives = semantic.query_local('user', e1=obj, rel='adjective')
+                    for adjective in adjectives:
+                        if count == 1:
+                            if obj[0] in VOWELS:
+                                output += " an " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                            else:
+                                output += " a " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                        elif 1 < count < len(adjectives):
+                            if obj[0] in VOWELS:
+                                output += " and an " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                            else:
+                                output += " and a " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                        elif count == len(adjectives):
+                            if obj[0] in VOWELS:
+                                output += " and an " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                            else:
+                                output += " and a " + adjective.relation.entity2 + " " + adjective.relation.entity1
+                            break
+                        count += 1
+                return output
             return smart_response(statement)
 
         # Examples:
         # - What do you know about John?
         # - What do you know about my phone?
         elif condition.wp_vbp_prp_vb_in():
+            print('wp_vbp_prp_vb_in || wp_vbz_rb')
             if len(tokens) == 7:
                 sub = words[5] + " " + words[6]
             else:
@@ -110,11 +141,12 @@ def analyse(statement, semantic, condition):
                         else:
                             pred = 'is a'
                     if count == 1:
-                        output += sub + " "
+                        output += sub + " " + pred + " " + obj + " "
+                    elif count > 1 and count < len(results):
+                        output += "and " + pred + " " + obj
                     elif count == len(results):
-                        output += pred + " " + obj
+                        output += "and " + pred + " " + obj
                         break
-                    output += pred + " " + obj + " and "
                     count += 1
                 return reflect(output)
             return "I don't know anything about " + reflect(sub)
@@ -125,8 +157,8 @@ def analyse(statement, semantic, condition):
         # Examples:
         # - Where is my phone?
         # - Where is the phone?
-
         if condition.wrb_vb_dt_nn():
+            print('wrb_vb_dt_nn')
             obj = words[2] + " " + words[3]
             last_sentence = False
             results = semantic.query_local('user', obj)
@@ -149,9 +181,9 @@ def analyse(statement, semantic, condition):
                 output = "I don't know where " + \
                     reflect(words[2]) + " " + \
                     reflect(words[3]) + " " + words[1]
-                randomknowledge = random_knowledge_about(obj, semantic)
-                if(randomknowledge != -1):
-                    output += " but i know that " + randomknowledge
+                random_knowledge = random_knowledge_about(obj, semantic)
+                if(random_knowledge != -1):
+                    output += " but i know that " + random_knowledge
                 return output
 
         # Examples:
@@ -159,6 +191,7 @@ def analyse(statement, semantic, condition):
         # - John is a friend
         # - Subtype para alguns casos
         elif condition.nn_vbz_dt_nn(words[1] + " " + words[2]):
+            print('nn_vbz_dt_nn')
             sub = words[0]
             pred = words[1]
             obj = words[2] + " " + words[3]
@@ -174,7 +207,8 @@ def analyse(statement, semantic, condition):
         # - My name is John Smith
         # - My name is Zé
         # Sometimes it detects JJ and NN in anothers
-        elif condition.prp_nn_vb_nn():
+        elif condition.prp_nn_vbz_nn():
+            print('prp_nn_vbz_nn')
             sub = words[0] + " " + words[1]
             pred = words[2]
             # With last name
@@ -195,6 +229,7 @@ def analyse(statement, semantic, condition):
         # - A cat is an animal
         # - A pussycat is a cat
         elif condition.dt_nn_vbz_dt_nn() or condition.nn_vbz_dt_nn_subtype():
+            print('dt_nn_vbz_dt_nn() || nn_vbz_dt_nn_subtype ')
             if condition.dt_nn_vbz_dt_nn():
                 sub = words[1]
                 pred = words[2] + " " + words[3]
@@ -225,6 +260,7 @@ def analyse(statement, semantic, condition):
         # - What is my name?
         # Any question with 'What' that has 4 words
         elif condition.wp_vbz_prp_nn():
+            print('wp_vbz_prp_nn')
             obj = words[2] + " " + words[3]
             same_verb = False
             results = semantic.query_local('user', e1=obj)
@@ -242,14 +278,15 @@ def analyse(statement, semantic, condition):
             else:
                 output = "I don't know what " + reflect(words[2]) + " " + \
                     reflect(words[3]) + " " + words[1]
-                randomknowledge = random_knowledge_about(obj, semantic)
-                if(randomknowledge != -1):
-                    output += " but i know that " + randomknowledge
+                random_knowledge = random_knowledge_about(obj, semantic)
+                if(random_knowledge != -1):
+                    output += " but i know that " + random_knowledge
                 return output
 
         # Examples:
         # - Do i have a cat
         elif condition.vbp_nns_vbp_dt_nn():
+            print('vbp_nns_vbp_dt_nn')
             obj = words[4]
             sub = words[1]
             pred = words[2] + " " + words[3]
@@ -276,18 +313,23 @@ def analyse(statement, semantic, condition):
             else:
                 output = "I don't know if " + \
                     reflect(words[1]) + " " + pred + " " + obj
-                randomknowledge = random_knowledge_about(obj, semantic)
-                if(randomknowledge != -1):
-                    output += " but I know that " + randomknowledge
+                random_knowledge = random_knowledge_about(obj, semantic)
+                if(random_knowledge != -1):
+                    output += " but I know that " + random_knowledge
                 return output
 
         # Examples:
         # - I have a cat
         elif condition.nns_vbp_dt_nn():
+            print('nns_vbp_dt_nn')
             sub = words[0]
-            pred = words[1] + " " + words[2]
+            pred = words[1]
             if len(tags) == 5:
-                obj = words[3] + " " + words[4]
+                adj = words[3]
+                obj = words[4]
+                assoc = Association(obj, 'adjective', adj)
+                d = Declaration('user', assoc)
+                semantic.insert(d)
             else:
                 obj = words[3]
             output = random.choice(responses) + " " + reflect(sub) + " " + \
@@ -315,32 +357,33 @@ def analyse(statement, semantic, condition):
         # Examples:
         # - Who is John?
         if condition.wp_vbz_rb():
-            obj = words[2]
-            same_verb = False
-            results = semantic.query_local('user', e1=obj)
-            for sentence in results:
-                res_sub = sentence.relation.entity1
-                res_pred = sentence.relation.name
-                res_obj = sentence.relation.entity2
-                if words[1] in res_pred:
-                    if not same_verb:
-                        output = '{} {} {}'.format(res_sub, res_pred, res_obj)
-                    else:
-                        res_pred = nltk.word_tokenize(res_pred)
-                        output += ", " + '{} {}'.format(res_pred[1], res_obj)
-                    same_verb = True
-            if same_verb:
+            print('wp_vbz_rb')
+            sub = words[2]
+            # change from me to I
+            sub = another_reflection(sub)
+            results = semantic.query_local('user', e1=sub) + semantic.query_local('user', e2=sub)
+            if len(results) > 0:
+                output = ""
+                count = 1
+                for sentence in results:
+                    sub = sentence.relation.entity1
+                    pred = sentence.relation.name
+                    obj = sentence.relation.entity2
+                    if pred == 'subtype':
+                        if obj[0] in VOWELS:
+                            pred = 'is an'
+                        else:
+                            pred = 'is a'
+                    if count == 1:
+                        output += sub + " " + pred + " " + obj + " "
+                    elif 1 < count < len(results):
+                        output += "and " + pred + " " + obj
+                    elif count == len(results):
+                        output += "and " + pred + " " + obj
+                        break
+                    count += 1
                 return reflect(output)
-            else:
-
-                output = "I don't know " + words[0] + " is " + words[2]
-                randomknowledge = random_knowledge_about(obj, semantic)
-                if(randomknowledge != -1):
-                    output += " but i know that " + randomknowledge
-                return output
-
-        else:
-            return smart_response(statement)
+            return "I don't know anything about " + reflect(sub)
     else:
         return smart_response(statement)
 

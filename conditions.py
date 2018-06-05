@@ -94,7 +94,7 @@ class Condition:
             and self.statements[3] == 'NN' \
             and 'is a' not in sentence and 'is an' not in sentence
 
-    def prp_nn_vb_nn(self):
+    def prp_nn_vbz_nn(self):
         return self.statements[0] == 'PRP$' \
             and self.statements[1] == 'NN' \
             and self.statements[2] == 'VBZ' \
@@ -116,9 +116,9 @@ class Condition:
         return self.statements[0] == 'NNS' \
             and self.statements[1] == 'VBP'  \
             and self.statements[2] == 'DT' \
-            and self.statements[3] == 'NN' or self.statements[3] == 'JJ'
+            and (self.statements[3] == 'NN' or self.statements[3] == 'JJ')
 
     def wp_vbz_rb(self):
         return self.statements[0] == 'WP' \
             and self.statements[1] == 'VBZ' \
-            and self.statements[2] == 'RB' or self.statements[2] == 'NN'
+            and (self.statements[2] == 'RB' or self.statements[2] == 'NN')
