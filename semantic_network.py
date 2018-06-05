@@ -39,6 +39,7 @@ class Declaration:
     def __repr__(self):
         return str(self)
 
+
 # Set of triples manage in a list
 class SemanticNetwork:
     def __init__(self, ldecl=[]):
@@ -67,7 +68,6 @@ class SemanticNetwork:
         queries = self.query_local('user', sub, pred, obj)
         for query in queries:
             self.declarations.remove(query)
-
 
     def path_to_root(self, entity):
         direct_relations = [d for d in self.declarations if d.relation.entity1 == entity]

@@ -16,7 +16,12 @@ reflections = {
 }
 
 another_reflect = {
-
     "me": "i"
-
 }
+
+possession_reflect = {
+    "i_have": "my",
+    "i": "my"
+}
+
+
