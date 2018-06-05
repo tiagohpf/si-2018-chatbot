@@ -22,6 +22,27 @@ python3
 »»» nltk.download('averaged_perceptron_tagger')
 
 ```
+## Supported Sentences
+The conversation agent can support several sentences and questions. Here are some of the most important input examples:
+- My phone is on the table
+- The table is in the room
+- The room is in the house
+- Where is my phone?
+- The food is in the fridge
+- I need a snake
+- I have a white boat
+- What is the color of my boat?
+- I have an old dog
+- What is the age of my dog?
+- Do I have a dog?
+- My name is John
+- My name is Earl Smith
+- What is my name?
+- A cat is an animal
+- Bob is nice
+- Bob is my friend
+- Bob is a cat
+- Who is bob?
 
-## Examples
-The file [tutorial.txt](https://github.com/tiagohpf/si-2018-chatbot/blob/master/tutorial.txt) shows some examples that's possible to follow in the execution of the application. It shows different scenarios and the interaction between the user and the conversational agent.
+### Examples
+The file [example.txt](https://github.com/tiagohpf/si-2018-chatbot/blob/master/example.txt) shows some examples that's possible to follow in the execution of the application. It shows different scenarios and the interaction between the user and the conversational agent.
