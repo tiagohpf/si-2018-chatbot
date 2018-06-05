@@ -122,3 +122,7 @@ class Condition:
         return self.statements[0] == 'WP' \
             and self.statements[1] == 'VBZ' \
             and (self.statements[2] == 'RB' or self.statements[2] == 'NN')
+    def nn_vbz_jj(self):
+        return self.statements[0] == 'NN' \
+            and self.statements[1] == 'VBZ' \
+            and (self.statements[2] == 'JJ')

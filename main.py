@@ -68,22 +68,25 @@ def analyse(statement, semantic, condition):
             print('wp_vbz_dt_nn_in_dt_nn()')
             sub = words[3]
             obj = words[6]
-            results = semantic.query_local('user', e2=sub, rel='adjective')
-            print(semantic.query_local('user'))
+            results = semantic.query_local('user', e2=sub, rel='subtype')
             if len(results) > 0:
+                output=''
                 for sentence in results:
                     res_sub = sentence.relation.entity1
                     res_pred = sentence.relation.name
                     red_obj = sentence.relation.entity2
                 if(red_obj == sub):
                     res_results = semantic.query_local('user', e2=obj)
-                    print("res_results", res_results)
                     for sentences in res_results:
                         sub_results = sentences.relation.entity1
                         pred_results = sentences.relation.name
                         obj_results = sentences.relation.entity2
-                    output = '{} {} {}'.format(sub_results, pred_results, obj_results)
-                    return reflect(output)
+                    if pred_results in VOWELS:
+                        output +="an "+res_sub+ " "+ obj_results
+                    else:
+                        output +="a " +res_sub+ " "+ obj_results
+                    out = '{} {} {}'.format(reflect(sub_results), pred_results, output)
+                    return out
             else:
                 results = semantic.query_local('user', e2=obj, rel='have')
                 print(results)
@@ -128,6 +131,7 @@ def analyse(statement, semantic, condition):
             # change from me to I
             sub = another_reflection(sub)
             results = semantic.query_local('user', e1=sub) + semantic.query_local('user', e2=sub)
+            print(semantic.query_local('user'))
             if len(results) > 0:
                 output = ""
                 count = 1
@@ -141,11 +145,11 @@ def analyse(statement, semantic, condition):
                         else:
                             pred = 'is a'
                     if count == 1:
-                        output += sub + " " + pred + " " + obj + " "
+                        output += sub + " " + pred + " " + obj
                     elif count > 1 and count < len(results):
-                        output += "and " + pred + " " + obj
+                        output += ", " + pred + " " + obj
                     elif count == len(results):
-                        output += "and " + pred + " " + obj
+                        output += " and " + pred + " " + obj
                         break
                     count += 1
                 return reflect(output)
@@ -195,8 +199,6 @@ def analyse(statement, semantic, condition):
             sub = words[0]
             pred = words[1]
             obj = words[2] + " " + words[3]
-            if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
-                semantic.remove_instances(sub=sub, pred=pred)
             a = Association(sub, pred, obj)
             da = Declaration("user", a)
             semantic.insert(da)
@@ -300,13 +302,18 @@ def analyse(statement, semantic, condition):
                 res_sub = sentence.relation.entity1
                 res_pred = sentence.relation.name
                 red_obj = sentence.relation.entity2
+                response="Yes,"
+                if red_obj in VOWELS:
+                    pred = 'an'
+                else:
+                    pred = 'a'
 
                 if pred in res_pred or words[2] in res_pred:
                     if not last_sentence:
-                        output = '{} {} {}'.format(res_sub, res_pred, red_obj)
+                        output = '{} {} {} {} {}'.format(response,res_sub, res_pred, pred, red_obj)
                     else:
                         res_pred = nltk.word_tokenize(res_pred)
-                        output += ", " + '{} {}'.format(res_pred[1], red_obj)
+                        output += ", " + '{} {} {}'.format(res_pred[1], pred, red_obj)
                     last_sentence = True
             if last_sentence:
                 return reflect(output)
@@ -330,10 +337,10 @@ def analyse(statement, semantic, condition):
                 assoc = Association(obj, 'adjective', adj)
                 d = Declaration('user', assoc)
                 semantic.insert(d)
+                output = random.choice(responses) + " " + reflect(sub) + " " + pred + " " + words[2] + " " + adj+ " "+ obj
             else:
                 obj = words[3]
-            output = random.choice(responses) + " " + reflect(sub) + " " + \
-                pred + " " + obj
+                output = random.choice(responses) + " " + reflect(sub) + " " + pred + " " + words[2] + " " + obj
             if len(semantic.query_local('user', e1=sub, rel=pred)) > 0:
                 semantic.remove_instances(sub, pred, obj)
             if(words[3] == 'green' or words[3] == 'blue' or words[3] == 'red' or words[3] == 'yellow' or words[3] == 'orange'):
@@ -384,6 +391,19 @@ def analyse(statement, semantic, condition):
                     count += 1
                 return reflect(output)
             return "I don't know anything about " + reflect(sub)
+
+        # Examples:
+        # - John is Portuguese
+        elif condition.nn_vbz_jj():
+            print('nn_vbz_jj')
+            sub = words[0]
+            pred = words[1]
+            obj = words[2]
+            a = Association(sub, pred, obj)
+            da = Declaration("user", a)
+            semantic.insert(da)
+            output = random.choice(responses) + " " + reflect(statement)
+            return output
     else:
         return smart_response(statement)
 
