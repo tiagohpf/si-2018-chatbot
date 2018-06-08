@@ -368,9 +368,11 @@ def analyse(statement, semantic, condition):
             sub = words[0]
             pred = words[1]
             obj = words[2]
-            assoc = Association(sub, pred, obj)
-            dec = Declaration("user", assoc)
-            semantic.insert_instance(dec)
+            query = semantic.query_local('user', e1=sub, rel=pred, e2=obj)
+            if len(query) == 0:
+                assoc = Association(sub, pred, obj)
+                dec = Declaration("user", assoc)
+                semantic.insert_instance(dec)
             output = random.choice(responses) + " " + reflect(statement)
             return output
     else:
