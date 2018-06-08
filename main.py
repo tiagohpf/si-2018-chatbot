@@ -60,8 +60,8 @@ def analyse(statement, semantic, condition):
     tags = nltk.pos_tag(tokens)
 
     # Print values
-    #for sentence in tags:
-        #print(sentence)
+    # for sentence in tags:
+    # print(sentence)
 
     words = [word for word, statement in tags]
     statements = [statement for word, statement in tags]
@@ -377,7 +377,6 @@ def analyse(statement, semantic, condition):
             return output
     else:
         return smart_response(statement)
-    # Precisa de estar aqui para frases não suportadas, i am nice por exemplo
     return smart_response(statement)
 
 
@@ -428,6 +427,7 @@ def main():
         print(response)
         file.write(response + "\n\n")
     file.close()
+
 
 if __name__ == "__main__":
     main()
